@@ -14,6 +14,8 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   sensor_msgs
   lpv
+  motion_generators
+  utils
 )
 
 find_package(Eigen3 REQUIRED)
