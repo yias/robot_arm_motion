@@ -56,6 +56,7 @@
   <build_depend>sensor_msgs</build_depend>
   <build_depend>lpv</build_depend>
   <build_depend>utils</build_depend>
+  <build_depend>gaze_tracking</build_depend>
 
   <build_export_depend>mathlib</build_export_depend>
   <build_export_depend>roscpp</build_export_depend>
@@ -71,6 +72,7 @@
   <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>lpv</exec_depend>
   <exec_depend>utils</exec_depend>
+  <exec_depend>gaze_tracking</exec_depend>
 
 
 

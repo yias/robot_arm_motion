@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   lpv
   motion_generators
   utils
+  gaze_tracking
 )
 
 find_package(Eigen3 REQUIRED)
@@ -144,6 +145,11 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 add_executable(rds_motion src/robotDSMotion.cpp)
 target_link_libraries(rds_motion ${catkin_LIBRARIES})
 add_dependencies(rds_motion ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+add_executable(target_locator src/targetDefiner.cpp)
+target_link_libraries(target_locator ${catkin_LIBRARIES})
+add_dependencies(target_locator ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(target_locator ${catkin_EXPORTED_TARGETS})
 
 
 ## Rename C++ executable without prefix
