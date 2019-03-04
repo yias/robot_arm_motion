@@ -59,7 +59,7 @@ void targetListener(const geometry_msgs::Pose::ConstPtr& msg){
 
 	//_msgRealPose = *msg;
 
-	_targetPosition << -msg->position.x, msg->position.y, msg->position.z;
+	_targetPosition << -msg->position.x, -msg->position.y, msg->position.z;
   	_targetOrientation << msg->orientation.w, msg->orientation.x, msg->orientation.y, msg->orientation.z;
 	_targetRotMatrix = Utils::quaternionToRotationMatrix(_targetOrientation);
 
@@ -139,7 +139,7 @@ int main(int argc, char **argv)
 			desiredNextPosition[0]=xD[0]*(1.0/1000.0)+_eePosition(0);
 			desiredNextPosition[1]=xD[1]*(1.0/1000.0)+_eePosition(1);
 			desiredNextPosition[2]=xD[2]*(1.0/1000.0)+_eePosition(2);
-			std::cout << "desiredNextPosition" << desiredNextPosition[0] << " " << desiredNextPosition[1] << " " << desiredNextPosition[2] <<"\n";
+			std::cout << "desiredNextPosition " << desiredNextPosition[0] << " " << desiredNextPosition[1] << " " << desiredNextPosition[2] <<"\n";
 
 			_msgDesiredPose.position.x=desiredNextPosition[0];
 			_msgDesiredPose.position.y=desiredNextPosition[1];

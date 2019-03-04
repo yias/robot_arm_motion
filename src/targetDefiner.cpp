@@ -30,6 +30,8 @@ double objectPoseStamp=0;
 float _objectZOffset=0.1f;
 float _objectYOffset=0.0f;
 
+Eigen::Vector3f obj1_To_Robot;
+
 Eigen::VectorXf object_position(3);									// the position of the object as received from the mocap system
 Eigen::VectorXf object_orientation(4);								// the orientation of the object as received from the mocap system
 Eigen::Matrix3f object_rotMatrix;
@@ -42,6 +44,8 @@ double object2PoseStamp=0;
 float _object2ZOffset=0.1f;
 float _object2YOffset=0.0f;
 
+Eigen::Vector3f obj2_To_Robot;
+
 Eigen::VectorXf object2_position(3);								// the position of the object 2 as received from the mocap system
 Eigen::VectorXf object2_orientation(4);								// the orientation of the object 2 as received from the mocap system
 Eigen::Matrix3f object2_rotMatrix;
@@ -52,7 +56,7 @@ Eigen::Matrix3f object2_rotMatrix;
 bool _firstARCUPoseReceived=false;
 double ARCUboard_PoseStamp=0;
 float _ARCUboard_ZOffset=0.01f;
-float _ARCUboard_YOffset=0.0f;
+float _ARCUboard_YOffset=0.025f;
 
 Eigen::VectorXf ARCUboard_position(3);								// the position of the frame on the ARCU-borad as received from the mocap system
 Eigen::VectorXf ARCUboard_orientation(4);							// the orientation of the frame on the ARCU-borad as received from the mocap system
@@ -226,8 +230,7 @@ Eigen::Vector3f calc_TargetPosition(){
 
 	Eigen::Vector3f tmp_TPosition;
 	Eigen::Vector3f ARCU_To_Robot;
-	Eigen::Vector3f obj1_To_Robot;
-	Eigen::Vector3f obj2_To_Robot;
+	
 	double euc_d1,euc_d2;
 	int decision=0;
 
@@ -246,18 +249,24 @@ Eigen::Vector3f calc_TargetPosition(){
 
 	obj2_To_Robot=object2_position-robot_base_position;
 
+	std::cout << "obj2 pos " << obj2_To_Robot[0] << " " << obj2_To_Robot[1] << " " << obj2_To_Robot[2] << "\n";
+
 	// the position of the object on the robot frame in 2D
 
 	tmp_TPosition[0]=ARCU_To_Robot[0]+ARCU_Target_position[0];
 	tmp_TPosition[1]=ARCU_To_Robot[1]+ARCU_Target_position[1];
 
+	std::cout << "2d position of target: " << tmp_TPosition[0] << " " <<  tmp_TPosition[1] << "\n";
+
 	// ------ classify the position of the target to one of the two objects with respect to the distance from the objects  --------------------
 
 	// the euclidean distance from object 1
 
-	euc_d1=std::sqrt(std::fabs(tmp_TPosition[0]-obj1_To_Robot[0])+std::fabs(tmp_TPosition[1]-obj1_To_Robot[1]));
+	euc_d1=std::sqrt(std::pow(std::fabs(tmp_TPosition[0]-obj1_To_Robot[0]),2)+std::pow(std::fabs(tmp_TPosition[1]-obj1_To_Robot[1]),2));
 
-	euc_d2=std::sqrt(std::fabs(tmp_TPosition[0]-obj2_To_Robot[0])+std::fabs(tmp_TPosition[1]-obj2_To_Robot[1]));
+	// the euclidean distance from object 1
+
+	euc_d2=std::sqrt(std::pow(std::fabs(tmp_TPosition[0]-obj2_To_Robot[0]),2)+std::pow(std::fabs(tmp_TPosition[1]-obj2_To_Robot[1]),2));
 
 	std::cout<<"euclidean distances " << euc_d1 << " " << euc_d2 << "\n";
 
@@ -332,12 +341,14 @@ int main(int argc, char **argv){
 		// std::cout<<count<<"\n";
 
 		targetPosition=calc_TargetPosition();
+		targetPosition=obj2_To_Robot;
 		targetOrientation=object_orientation;
 
 		//std::cout << "target position: " << targetPosition[0] << " " << targetPosition[1] << " " << targetPosition[2] << "\n";
 		//std::cout << "euc norm: " << targetPosition.norm() << "\n";
 
-		if(validity_flag){
+		// if(validity_flag){
+		if(true){
 			_msgTargetPose.position.x=targetPosition[0];
 			_msgTargetPose.position.y=targetPosition[1];
 			_msgTargetPose.position.z=targetPosition[2];
