@@ -125,8 +125,8 @@ int main(int argc, char **argv){
 
 	
     targetPosition[0] = -0.5;
-    targetPosition[1] = 0.6;
-    targetPosition[2] = 0.2;
+    targetPosition[1] = 0.3;
+    targetPosition[2] = 0.1;
 
     targetOrientation[0] = 0.0;
     targetOrientation[1] = 0.0;

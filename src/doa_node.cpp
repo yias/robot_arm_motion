@@ -1,3 +1,6 @@
+
+
+
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 
@@ -7,6 +10,16 @@
 #include "geometry_msgs/Pose.h"
 #include "geometry_msgs/Twist.h"
 #include "geometry_msgs/Quaternion.h"
+
+#include "DSObstacleAvoidance.h"
+
+// #include "DynamicObstacleAvoidance/Modulation.hpp"
+// #include "DynamicObstacleAvoidance/Obstacle/Ellipsoid.hpp"
+// #include "DynamicObstacleAvoidance/Obstacle/Aggregate.hpp"
+// // #include "DynamicObstacleAvoidance/Utils/Plotting/PlottingTools.hpp"
+// #include "DynamicObstacleAvoidance/Utils/ObstacleGeneration/Aggregation.hpp"
+// #include "DynamicObstacleAvoidance/Utils/MathTools.hpp"
+// #include "DynamicObstacleAvoidance/Agent.hpp"
 
 
 #include <sstream>
@@ -85,7 +98,7 @@ void targetListener(const geometry_msgs::Pose::ConstPtr& msg){
 int main(int argc, char **argv)
 {
 
-	ros::init(argc, argv, "robotarmdsmotion");
+	ros::init(argc, argv, "obstacleavoidance");
 
 	ros::NodeHandle n;
 
@@ -105,8 +118,36 @@ int main(int argc, char **argv)
 	Eigen::MatrixXf A_tmp;
 
 	Eigen::VectorXf xD(3);
+    Eigen::Vector3f _vd;
+    _vd.setConstant(0.0f);
 
 	Eigen::VectorXf desiredNextPosition(3);
+
+    Obstacle _obs1, _obs2;
+    DSObstacleAvoidance obsModulator;
+
+
+    // define the first obstacle
+    _obs1._x0 << -0.5f, 0.01f, 0.2f; // obstacle position
+    _obs1._a << 0.5f,0.1f,0.12f;
+    _obs1._p.setConstant(1.0f);
+    _obs1._safetyFactor = 2.0;
+	_obs1._rho = 3.0;
+    _obs1._tailEffect = false;
+	_obs1._bContour = false;
+
+
+    obsModulator.addOstacle(_obs1);
+
+    // define the second obstacle
+    _obs2._x0 << 0.95f, 0.85f, 0.90f; 
+    _obs2._a << 0.5f,0.1f,0.12f;
+    _obs2._p.setConstant(1.0f);
+    _obs2._safetyFactor = 1.0;
+	_obs2._rho = 3.0;
+    _obs2._tailEffect = false;
+	_obs2._bContour = false;
+
 
 	// LPV tr_gen;
 
@@ -122,9 +163,9 @@ int main(int argc, char **argv)
 
 	Eigen::MatrixXf W_M(3,3);
 
-	W_M<< -2.0,0.0,0.0,
-		  0.0,-2.0,0.0,
-		  0.0,0.0,-2.0;
+	W_M<< -1.0,0.0,0.0,
+		  0.0,-1.0,0.0,
+		  0.0,0.0,-1.0;
 
 	int count = 0;
 
@@ -132,7 +173,7 @@ int main(int argc, char **argv)
 
 		if(_firstRealPoseReceived){
 
-			xD=W_M*(_eePosition-_targetPosition);
+			xD=W_M*(_eePosition - _targetPosition);
 
 			// if((_eePosition-_targetPosition).norm()<=0.1f){
 			// 	xD=W_M*(_eePosition-_targetPosition);
@@ -141,9 +182,10 @@ int main(int argc, char **argv)
 
 			// 	xD=100.0*A_tmp*(_eePosition-_targetPosition);	
 			// }
-
+            
+            _vd = obsModulator.obsModulationEllipsoid(_eePosition, xD, false);
 			// Bound desired velocity
-			if (xD.norm()>0.3f)
+			if (_vd.norm()>0.3f)
 			{
 				xD = xD*0.3f/xD.norm();
 			}
@@ -151,9 +193,14 @@ int main(int argc, char **argv)
 
 			// xD=W_M*(_eePosition-_targetPosition);
 			std::cout << "xD=" << xD[0] << " " << xD[1] << " " << xD[2] <<"\n";
-			std::cout << "speed: " << xD.norm() << "\n";
+            std::cout << "vd: " << _vd(0) << ", " << _vd(1) << ", " << _vd(2) << std::endl;
+			std::cout << "speed: " << _vd.norm() << "\n";
 			std::cout << "distance: " << (_eePosition-_targetPosition).norm() << "\n";
-			std::cout << "target: " << _targetPosition[0] << " " << _targetPosition[1] << " " << _targetPosition[2] <<"\n";
+			std::cout << "target: " << _targetPosition[0] << " " << _targetPosition[1] << " " << _targetPosition[2] << std::endl;
+
+            
+
+            
 
 			// desiredNextPosition[0]=xD[0]*(1.0/1000.0)+_eePosition(0);
 			// desiredNextPosition[1]=xD[1]*(1.0/1000.0)+_eePosition(1);
@@ -168,9 +215,9 @@ int main(int argc, char **argv)
 			// _msgDesiredPose.orientation.y=_eeOrientation[2];
 			// _msgDesiredPose.orientation.z=_eeOrientation[3];
 
-			_msgDesiredPose.linear.x=xD[0];
-			_msgDesiredPose.linear.y=xD[1];
-			_msgDesiredPose.linear.z=xD[2];
+			_msgDesiredPose.linear.x=_vd[0];
+			_msgDesiredPose.linear.y=_vd[1];
+			_msgDesiredPose.linear.z=_vd[2];
 			_msgDesiredPose.angular.x = 0.0;
 			_msgDesiredPose.angular.y = 0.0;
 			_msgDesiredPose.angular.z = 0.0;
@@ -190,9 +237,6 @@ int main(int argc, char **argv)
 			_pubDesiredOrientation.publish(_msgDesiredOrientation);
 
 			
-
-			std::cout << "test\n";
-	
 		}
 		
 		
