@@ -11,12 +11,15 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   sensor_msgs
 #  lpv
-  motion_generators
+  # motion_generators
   utils
 #  gaze_tracking
 )
-
-find_package(Eigen3 REQUIRED)
+message(STATUS "eigen include dir ${EIGEN3_INCLUDE_DIR}")
+# find_package(Eigen3 REQUIRED)
+# if(NOT Eigen_FOUND)
+#   include(cmake/FindEigen3.cmake)
+# endif()
 # find_package(PythonLibs 2.7)
 
 ## System dependencies are found with CMake's conventions
@@ -33,7 +36,7 @@ catkin_package(
  INCLUDE_DIRS include
  LIBRARIES robot_arm_motion
  CATKIN_DEPENDS mathlib roscpp std_msgs #lpv
- DEPENDS system_lib Eigen3
+ DEPENDS system_lib #Eigen3
 )
 
 ###########
@@ -48,6 +51,7 @@ include_directories(
 )
 include_directories(include ${catkin_INCLUDE_DIRS})
 include_directories(${EIGEN3_INCLUDE_DIR})
+
 
 
 add_executable(rds_motion src/robotDSMotion.cpp)

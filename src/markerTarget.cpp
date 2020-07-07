@@ -134,7 +134,7 @@ void markerTarget::updateRobotBasePose(const geometry_msgs::PoseStamped& msg){
 
     // extract orientation from the message
   	_rbtOrientation << msg.pose.orientation.w, msg.pose.orientation.x, msg.pose.orientation.y, msg.pose.orientation.z;
-	_rbtRotMat = Utils::quaternionToRotationMatrix(_rbtOrientation);
+	_rbtRotMat = Utils<float>::quaternionToRotationMatrix(_rbtOrientation);
 
 
 	if(!_firstRbtBasePoseReceived)
@@ -164,7 +164,7 @@ void markerTarget::updateMkrPose(const geometry_msgs::PoseStamped& mocapmsg){
 	// extract orientation from the message
 	_mkrOrientation << mocapmsg.pose.orientation.w, mocapmsg.pose.orientation.x, mocapmsg.pose.orientation.y, mocapmsg.pose.orientation.z;
 
-	_mkrRotMat = Utils::quaternionToRotationMatrix(_mkrOrientation);
+	_mkrRotMat = Utils<float>::quaternionToRotationMatrix(_mkrOrientation);
 
 	
 	if(!_firstMarkerPoseReceived)

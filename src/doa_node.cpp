@@ -58,7 +58,7 @@ void robotListener(const geometry_msgs::Pose::ConstPtr& msg){
 	if(!_firstRealPoseReceived)
 	{
 		_eeOrientation << msg->orientation.w, msg->orientation.x, msg->orientation.y, msg->orientation.z;
-		_eeRotMat = Utils::quaternionToRotationMatrix(_eeOrientation);
+		_eeRotMat = Utils<float>::quaternionToRotationMatrix(_eeOrientation);
 		_firstRealPoseReceived = true;
 		ROS_INFO("Robot Pose received\n");
 		// _targetPosition[0]=_eePosition[0]-0.1;
@@ -80,7 +80,7 @@ void targetListener(const geometry_msgs::Pose::ConstPtr& msg){
 
 	_targetPosition << msg->position.x, msg->position.y, msg->position.z;
   	_targetOrientation << msg->orientation.w, msg->orientation.x, msg->orientation.y, msg->orientation.z;
-	_targetRotMatrix = Utils::quaternionToRotationMatrix(_targetOrientation);
+	_targetRotMatrix = Utils<float>::quaternionToRotationMatrix(_targetOrientation);
 
 
 	if(!_firstTargetPoseReceived)
