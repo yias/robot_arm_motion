@@ -39,14 +39,26 @@ bool markerTarget::init(){
     _vcurr.setConstant(0.0);
     _stop = false;
 
+	_rotMatrix << 1.0, 0.0, 0.0,
+				   0.0, 1.0, 0.0,
+				   0.0, 0.0, 1.0;
+	
+	alpha = 1;
+
     // Catch CTRL+C event with the callback provided
 	signal(SIGINT, markerTarget::stopNodeCallback);
 
-    _targetOffsets << 0.0, 0.0, 0.20;
+    _targetOffsets << -0.3, 0.0, 0.30;
+
+	
+
+	_f = boost::bind(&markerTarget::dynRecCallback, this, _1, _2);
+
+	dynServer.setCallback(_f);
 
     // Subscriber definitions
     _mkrSub = _n.subscribe("/vrpn_client_node/hand/pose", 1, &markerTarget::updateMkrPose, this, ros::TransportHints().reliable().tcpNoDelay());
-    _robotBaseSub = _n.subscribe("/vrpn_client_node/left_robot/pose", 1, &markerTarget::updateRobotBasePose, this, ros::TransportHints().reliable().tcpNoDelay());
+    _robotBaseSub = _n.subscribe("/vrpn_client_node/robot_right/pose", 1, &markerTarget::updateRobotBasePose, this, ros::TransportHints().reliable().tcpNoDelay());
 
 	// Publisher definitions
     _pubtarget = _n.advertise<geometry_msgs::Pose>("/target", 1);
@@ -128,7 +140,7 @@ void markerTarget::updateRobotBasePose(const geometry_msgs::PoseStamped& msg){
     *   Callback function for updating the robot's base pose
     * 
     */
-
+   	
     // extract position from the message
 	_rbtPosition << msg.pose.position.x, msg.pose.position.y, msg.pose.position.z;
 
@@ -190,8 +202,8 @@ void markerTarget::publishData()
 
 	_mutex.lock();
 
-    _tagetPoseMsg.position.x=_targetPosition[0];
-	_tagetPoseMsg.position.y=_targetPosition[1];
+    _tagetPoseMsg.position.x=-_targetPosition[1];
+	_tagetPoseMsg.position.y=_targetPosition[0];
 	_tagetPoseMsg.position.z=_targetPosition[2];
 	_tagetPoseMsg.orientation.w=_targetOrientation[0];
 	_tagetPoseMsg.orientation.x=_targetOrientation[1];
@@ -212,16 +224,23 @@ int markerTarget::computeDesiredTarget(){
     * 
     */
    
-    _targetPosition = _mkrPosition - _rbtPosition + _targetOffsets;
+    // _targetPosition = _mkrPosition - _rbtPosition + _targetOffsets;
 
     _targetOrientation[0] = 0.0;
     _targetOrientation[1] = 0.0;
     _targetOrientation[2] = 1.0;
     _targetOrientation[3] = 0.0;
 
-    std::cout << "target position: x: " << _targetPosition[0] << ", y: " << _targetPosition[1] << ", z: " << _targetPosition[2] << std::endl; 
+	_targetPosition = alpha * _rotMatrix * (_mkrPosition - _rbtPosition) + _targetOffsets;
+
+    std::cout << "target position: x: " << -_targetPosition[1] << ", y: " << _targetPosition[0] << ", z: " << _targetPosition[2] << std::endl; 
 
 
 
    return 0;
+}
+
+
+void markerTarget::dynRecCallback(robot_arm_motion::targetOffsetsConfig &config, uint32_t level){
+	_targetOffsets << config.x_offset, config.y_offset, config.z_offset;
 }

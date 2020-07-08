@@ -23,6 +23,9 @@
 #include "geometry_msgs/Twist.h"
 #include "geometry_msgs/Quaternion.h"
 
+#include <dynamic_reconfigure/server.h>
+#include <robot_arm_motion/targetOffsetsConfig.h>
+
 #include <signal.h>
 #include <mutex>
 #include <iostream>
@@ -47,6 +50,8 @@ class markerTarget {
     Eigen::Vector3f _targetPosition;     // position of the target with respect to the base of the robot
     Eigen::Vector4f _targetOrientation;     // orientation of the target with respect to the base of the robot(?)
     Eigen::Matrix3f _targetRotMatrix;       // rotation matrix of the target
+    Eigen::Matrix3f _rotMatrix;
+    double alpha;
 
     Eigen::Vector3f _mkrPosition;        // position of the marker in the world frame
     Eigen::Vector4f _mkrOrientation;        // orientation of the marker in the world frame
@@ -106,6 +111,12 @@ class markerTarget {
 
     // Stop node callback 
 	static void stopNodeCallback(int sig);
+
+    // callback function for dynamic reconfigurable offsets
+    void dynRecCallback(robot_arm_motion::targetOffsetsConfig &config, uint32_t level);
+
+    dynamic_reconfigure::Server<robot_arm_motion::targetOffsetsConfig> dynServer;
+    dynamic_reconfigure::Server<robot_arm_motion::targetOffsetsConfig>::CallbackType _f;
 
 
 public:

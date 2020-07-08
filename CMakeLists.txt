@@ -10,6 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   geometry_msgs
   sensor_msgs
+  dynamic_reconfigure
 #  lpv
   # motion_generators
   utils
@@ -23,10 +24,12 @@ message(STATUS "eigen include dir ${EIGEN3_INCLUDE_DIR}")
 # find_package(PythonLibs 2.7)
 
 ## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED COMPONENTS system)
 
 
-
+generate_dynamic_reconfigure_options(
+  cfg/config.cfg
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -38,6 +41,8 @@ catkin_package(
  CATKIN_DEPENDS mathlib roscpp std_msgs #lpv
  DEPENDS system_lib #Eigen3
 )
+
+
 
 ###########
 ## Build ##
@@ -64,7 +69,7 @@ add_dependencies(targetNode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTE
 
 add_executable(markerTargetNode src/markerTarget.cpp src/markerTarget_node.cpp)
 target_link_libraries(markerTargetNode ${catkin_LIBRARIES})
-add_dependencies(markerTargetNode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(markerTargetNode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencfg)
 
 
 
