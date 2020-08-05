@@ -48,10 +48,6 @@ void robotListener(const geometry_msgs::Pose::ConstPtr& msg){
 		_eeRotMat = Utils<float>::quaternionToRotationMatrix(_eeOrientation);
 		_firstRealPoseReceived = true;
 		ROS_INFO("Robot Pose received\n");
-		// _targetPosition[0]=_eePosition[0]-0.1;
-		// _targetPosition[1]=_eePosition[1]+0.05;
-		// _targetPosition[2]=_eePosition[2]-0.05;
-  	
 		
 	}
 }
@@ -61,21 +57,23 @@ void updateRealTwist(const geometry_msgs::Twist::ConstPtr& msg)
 	_v << msg->linear.x, msg->linear.y, msg->linear.z;
 }
 
-void targetListener(const geometry_msgs::Pose::ConstPtr& msg){
+// void targetListener(const geometry_msgs::Pose::ConstPtr& msg){
 
-	//_msgRealPose = *msg;
+// 	//_msgRealPose = *msg;
 
-	_targetPosition << msg->position.x, msg->position.y, msg->position.z;
-  	_targetOrientation << msg->orientation.w, msg->orientation.x, msg->orientation.y, msg->orientation.z;
-	_targetRotMatrix = Utils<float>::quaternionToRotationMatrix(_targetOrientation);
+// 	_targetPosition << msg->position.x, msg->position.y, msg->position.z;
+//   	_targetOrientation << msg->orientation.w, msg->orientation.x, msg->orientation.y, msg->orientation.z;
+// 	_targetRotMatrix = Utils<float>::quaternionToRotationMatrix(_targetOrientation);
 
 
-	if(!_firstTargetPoseReceived)
-	{
-		_firstTargetPoseReceived = true;
-		ROS_INFO("Target Pose received\n");
-	}
-}
+// 	if(!_firstTargetPoseReceived)
+// 	{
+// 		_firstTargetPoseReceived = true;
+// 		ROS_INFO("Target Pose received\n");
+
+		
+// 	}
+// }
 
 
 
@@ -92,7 +90,7 @@ int main(int argc, char **argv)
 
 	ros::Subscriber _subRealTwist = n.subscribe("/lwr/ee_vel", 1, updateRealTwist);
 
-	ros::Subscriber targetSub=n.subscribe("target", 10, targetListener);
+	// ros::Subscriber targetSub=n.subscribe("target", 10, targetListener);
 
 	ros::Publisher _pubDesiredPose=n.advertise<geometry_msgs::Twist>("/lwr/joint_controllers/passive_ds_command_vel", 10);
 	ros::Publisher _pubDesiredOrientation=n.advertise<geometry_msgs::Quaternion>("/lwr/joint_controllers/passive_ds_command_orient", 1);
@@ -120,6 +118,19 @@ int main(int argc, char **argv)
 
 	Eigen::MatrixXf W_M(3,3);
 
+    _targetPosition << -0.67, 0.0, 0.45;
+
+    Eigen::Matrix3f desOriation = Eigen::Matrix3f::Zero(3,3);
+
+    desOriation = Eigen::AngleAxisf(-1*M_PI/2,Eigen::Vector3f::UnitY());
+
+    Eigen::Matrix3f handOriation = Eigen::Matrix3f::Zero(3,3);
+
+    handOriation = Eigen::AngleAxisf(-1*M_PI/4,Eigen::Vector3f::UnitZ());
+    
+    _targetOrientation = Utils<float>::rotationMatrixToQuaternion(desOriation*handOriation);
+
+
 	W_M<< -2.0,0.0,0.0,
 		  0.0,-2.0,0.0,
 		  0.0,0.0,-2.0;
@@ -141,10 +152,10 @@ int main(int argc, char **argv)
 			// }
 
 			// Bound desired velocity
-			if (xD.norm()>0.3f)
-			{
-				xD = xD*0.3f/xD.norm();
-			}
+			// if (xD.norm()>0.3f)
+			// {
+			// 	xD = xD*0.3f/xD.norm();
+			// }
 			
 
 			// xD=W_M*(_eePosition-_targetPosition);
@@ -184,6 +195,8 @@ int main(int argc, char **argv)
 			_msgDesiredOrientation.x = _targetOrientation(1);
 			_msgDesiredOrientation.y = _targetOrientation(2);
 			_msgDesiredOrientation.z = _targetOrientation(3);
+
+            std::cout << _targetOrientation << std::endl;
 
 			_pubDesiredOrientation.publish(_msgDesiredOrientation);
 

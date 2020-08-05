@@ -67,9 +67,13 @@ add_executable(targetNode src/targetNode.cpp)
 target_link_libraries(targetNode ${catkin_LIBRARIES})
 add_dependencies(targetNode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-add_executable(markerTargetNode src/markerTarget.cpp src/markerTarget_node.cpp)
+add_executable(markerTargetNode src/markerTarget.cpp src/markerTarget_node.cpp src/sg_filter.cpp)
 target_link_libraries(markerTargetNode ${catkin_LIBRARIES})
 add_dependencies(markerTargetNode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencfg)
+
+add_executable(moveTodesPose src/moveTodesPose.cpp)
+target_link_libraries(moveTodesPose ${catkin_LIBRARIES})
+add_dependencies(moveTodesPose ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencfg)
 
 
 

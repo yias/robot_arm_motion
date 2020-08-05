@@ -20,6 +20,7 @@
 #include "sensor_msgs/JointState.h"
 
 #include "geometry_msgs/Pose.h"
+
 #include "geometry_msgs/Twist.h"
 #include "geometry_msgs/Quaternion.h"
 
@@ -33,6 +34,7 @@
 
 // #include "LPV.h"
 #include "Utils.h"
+#include "sg_filter.h"
 
 #include <Eigen/Eigen>
 #include <Eigen/Geometry>
@@ -47,10 +49,14 @@ class markerTarget {
     // Eigen::Vector4f _eeOrientation;         // orientation of the end-effector of the robot
     // Eigen::Matrix3f _eeRotMat;              // rotation matrix for the end-effector of the robot
 
-    Eigen::Vector3f _targetPosition;     // position of the target with respect to the base of the robot
+    Eigen::Vector3f _targetPosition;        // position of the target with respect to the base of the robot
     Eigen::Vector4f _targetOrientation;     // orientation of the target with respect to the base of the robot(?)
     Eigen::Matrix3f _targetRotMatrix;       // rotation matrix of the target
     Eigen::Matrix3f _rotMatrix;
+
+    Eigen::Vector3f _eePosition;
+    Eigen::Matrix3f _eeRotMat;
+    Eigen::Vector4f _eeOrientation;
     double alpha;
 
     Eigen::Vector3f _mkrPosition;        // position of the marker in the world frame
@@ -71,6 +77,7 @@ class markerTarget {
     double _mkrTimeStamp=0;                 // the time-stamp of the marker's subscriber
 
     bool _firstRbtBasePoseReceived=false;   // boolean flag to check if the first robot's base pose is received
+    bool _firstRealPoseReceived=false;
     double _rbtTimeStamp=0;                 // the time-stamp of the robot's base subscriber
 
     // ros-related variables
@@ -81,6 +88,7 @@ class markerTarget {
     // subscribers
     ros::Subscriber _mkrSub;                // subscriber to listen to the pose of the marker
     ros::Subscriber _robotBaseSub;          // subscriber to listen to the pose of the robot base
+    ros::Subscriber _robotSub;
 
     // publishers
     ros::Publisher _pubtarget;              // publiser for streaming the desired target pose
@@ -106,6 +114,8 @@ class markerTarget {
     // Callback to update the robot's base pose
     void updateRobotBasePose(const geometry_msgs::PoseStamped& msg); 
 
+    void robotListener(const geometry_msgs::Pose::ConstPtr& msg);
+
     // Callback function to update the marker's pose
     void updateMkrPose(const geometry_msgs::PoseStamped& msg); 
 
@@ -117,6 +127,14 @@ class markerTarget {
 
     dynamic_reconfigure::Server<robot_arm_motion::targetOffsetsConfig> dynServer;
     dynamic_reconfigure::Server<robot_arm_motion::targetOffsetsConfig>::CallbackType _f;
+
+
+    // filtering 
+    int filt_order;
+    int winlength;
+    int filt_dim;
+    float _dt;
+    SGF::SavitzkyGolayFilter sg_filter;
 
 
 public:

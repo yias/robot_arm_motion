@@ -16,7 +16,7 @@
 
 markerTarget* markerTarget::me = NULL;
 
-markerTarget::markerTarget(ros::NodeHandle &n, double frequency):_n(n), _loopRate(frequency){
+markerTarget::markerTarget(ros::NodeHandle &n, double frequency):_n(n), _loopRate(frequency), _dt(1/frequency){
     
     ROS_INFO_STREAM("The markerTarget node is created at: " << _n.getNamespace() << " with freq: " << frequency << "Hz");
 
@@ -45,12 +45,16 @@ bool markerTarget::init(){
 	
 	alpha = 1;
 
+	filt_order = 2;
+    winlength = 10;
+    filt_dim = 4;
+
+	sg_filter = SGF::SavitzkyGolayFilter(filt_dim, filt_order, winlength, _dt);
+
     // Catch CTRL+C event with the callback provided
 	signal(SIGINT, markerTarget::stopNodeCallback);
 
     _targetOffsets << -0.3, 0.0, 0.30;
-
-	
 
 	_f = boost::bind(&markerTarget::dynRecCallback, this, _1, _2);
 
@@ -59,6 +63,7 @@ bool markerTarget::init(){
     // Subscriber definitions
     _mkrSub = _n.subscribe("/vrpn_client_node/hand/pose", 1, &markerTarget::updateMkrPose, this, ros::TransportHints().reliable().tcpNoDelay());
     _robotBaseSub = _n.subscribe("/vrpn_client_node/robot_right/pose", 1, &markerTarget::updateRobotBasePose, this, ros::TransportHints().reliable().tcpNoDelay());
+	_robotSub = _n.subscribe("/lwr/ee_pose", 1, &markerTarget::robotListener, this, ros::TransportHints().reliable().tcpNoDelay());
 
 	// Publisher definitions
     _pubtarget = _n.advertise<geometry_msgs::Pose>("/target", 1);
@@ -67,7 +72,7 @@ bool markerTarget::init(){
 	if (_n.ok()) 
 	{ 
 		// Wait for poses being published
-        while(!(_firstMarkerPoseReceived && _firstRbtBasePoseReceived)){
+        while(!(_firstMarkerPoseReceived && _firstRbtBasePoseReceived && _firstRealPoseReceived)){
             ros::spinOnce();
         }
 		ROS_INFO("The motion generator is ready.");
@@ -135,6 +140,29 @@ void markerTarget::stopNodeCallback(int sig)
 
 // callback functions
 
+
+void markerTarget::robotListener(const geometry_msgs::Pose::ConstPtr& msg){
+
+	//_msgRealPose = *msg;
+
+	_eePosition << msg->position.x, msg->position.y, msg->position.z;
+	
+
+
+	if(!_firstRealPoseReceived)
+	{
+		_eeOrientation << msg->orientation.w, msg->orientation.x, msg->orientation.y, msg->orientation.z;
+		_eeRotMat = Utils<float>::quaternionToRotationMatrix(_eeOrientation);
+		_firstRealPoseReceived = true;
+		ROS_INFO("Initial Robot Pose received\n");
+		// _targetPosition[0]=_eePosition[0]-0.1;
+		// _targetPosition[1]=_eePosition[1]+0.05;
+		// _targetPosition[2]=_eePosition[2]-0.05;
+  	
+		
+	}
+}
+
 void markerTarget::updateRobotBasePose(const geometry_msgs::PoseStamped& msg){
     /*
     *   Callback function for updating the robot's base pose
@@ -169,9 +197,6 @@ void markerTarget::updateMkrPose(const geometry_msgs::PoseStamped& mocapmsg){
 
     // extract position from the message
     _mkrPosition << mocapmsg.pose.position.x, mocapmsg.pose.position.y, mocapmsg.pose.position.z;
-	// object_position[0]=mocapmsg.pose.position.x;
-	// object_position[1]=mocapmsg.pose.position.y;
-	// object_position[2]=mocapmsg.pose.position.z+_objectZOffset;
 
 	// extract orientation from the message
 	_mkrOrientation << mocapmsg.pose.orientation.w, mocapmsg.pose.orientation.x, mocapmsg.pose.orientation.y, mocapmsg.pose.orientation.z;
@@ -202,8 +227,8 @@ void markerTarget::publishData()
 
 	_mutex.lock();
 
-    _tagetPoseMsg.position.x=-_targetPosition[1];
-	_tagetPoseMsg.position.y=_targetPosition[0];
+    _tagetPoseMsg.position.x=_targetPosition[0];
+	_tagetPoseMsg.position.y=_targetPosition[1];
 	_tagetPoseMsg.position.z=_targetPosition[2];
 	_tagetPoseMsg.orientation.w=_targetOrientation[0];
 	_tagetPoseMsg.orientation.x=_targetOrientation[1];
@@ -223,13 +248,64 @@ int markerTarget::computeDesiredTarget(){
     *   Function for publishing the desired target pose
     * 
     */
-   
-    // _targetPosition = _mkrPosition - _rbtPosition + _targetOffsets;
 
-    _targetOrientation[0] = 0.0;
-    _targetOrientation[1] = 0.0;
-    _targetOrientation[2] = 1.0;
-    _targetOrientation[3] = 0.0;
+	_targetOrientation[0] = 0.67;
+    _targetOrientation[1] = 0.36;
+    _targetOrientation[2] = -0.64;
+    _targetOrientation[3] = -0.26;
+
+
+	Eigen::Matrix3f desOriation = Eigen::Matrix3f::Zero(3,3);
+
+    desOriation = Eigen::AngleAxisf(-1*M_PI/2,Eigen::Vector3f::UnitY());
+
+    Eigen::Matrix3f handOriation = Eigen::Matrix3f::Zero(3,3);
+
+    handOriation = Eigen::AngleAxisf(-1*M_PI/4,Eigen::Vector3f::UnitZ());
+
+	Eigen::Vector3f tt1 = _mkrRotMat.col(2).normalized();
+
+	float angle = (float)std::acos(tt1.dot( _rbtRotMat.col(2)));
+
+	Eigen::Vector3f crossP = _mkrRotMat.col(2).normalized().cross(_rbtRotMat.col(2)).normalized();
+
+	angle *= _eeRotMat.col(2).dot(crossP);
+
+	Eigen::Matrix3f mkrOrientation = Eigen::Matrix3f::Zero(3,3);
+
+	mkrOrientation = Eigen::AngleAxisf(-angle,Eigen::Vector3f::UnitZ());
+    
+    Eigen::Vector4f _targetOrientation_t = Utils<float>::rotationMatrixToQuaternion(desOriation*handOriation*mkrOrientation);
+
+	sg_filter.AddData(_targetOrientation_t);
+
+	Eigen::VectorXf filteredSignal;
+
+	if (sg_filter.GetOutput(0, filteredSignal) < 0){
+		_targetOrientation = Utils<float>::rotationMatrixToQuaternion(desOriation*handOriation);
+	}else{
+		_targetOrientation = filteredSignal;
+	}
+
+	// Eigen::Matrix3f rotY = Eigen::Matrix3f::Zero(3,3);
+	// Eigen::Matrix3f desOriation = Eigen::Matrix3f::Zero(3,3);
+	// rotY << -1.0, 0.0, 0.0, 
+	// 		 0.0, 1.0, 0.0, 
+	// 		 0.0, 0.0, -1.0;
+
+	// desOriation << 1.0, 0.0, 0.0, 
+	// 				0.0, 0.0, -1.0, 
+	// 				0.0, 1.0, 0.0;
+
+	// desOriation = Eigen::AngleAxisf(1*M_PI/2,Eigen::Vector3f::UnitX());
+
+	// _mkrRotMat = _mkrRotMat * rotY;
+
+	// Eigen::Vector4f q_des_orientation = Utils<float>::rotationMatrixToQuaternion(_mkrRotMat);
+
+	// Eigen::Vector4f t_orient = Utils<float>::slerpQuaternion(q_des_orientation, _eeOrientation, 0.1);
+
+	// _targetOrientation = Utils<float>::rotationMatrixToQuaternion(desOriation);
 
 	_targetPosition = alpha * _rotMatrix * (_mkrPosition - _rbtPosition) + _targetOffsets;
 
