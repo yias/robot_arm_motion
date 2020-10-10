@@ -92,7 +92,7 @@ int main(int argc, char **argv)
 
 	ros::Subscriber _subRealTwist = n.subscribe("/lwr/ee_vel", 1, updateRealTwist);
 
-	ros::Subscriber targetSub=n.subscribe("target", 10, targetListener);
+	ros::Subscriber targetSub=n.subscribe("/target", 10, targetListener);
 
 	ros::Publisher _pubDesiredPose=n.advertise<geometry_msgs::Twist>("/lwr/joint_controllers/passive_ds_command_vel", 10);
 	ros::Publisher _pubDesiredOrientation=n.advertise<geometry_msgs::Quaternion>("/lwr/joint_controllers/passive_ds_command_orient", 1);

@@ -1,0 +1,31 @@
+<launch>
+
+  <arg name="markerName" default="hand" />
+  <arg name="robotMarker" default="robot_right" />
+  <arg name="robotName" default="lwr" />
+  <arg name="serverIP" default="128.178.145.104" />
+  
+  <include file="$(find robot_arm_motion)/launch/mocap.launch">
+    <arg name="server" default="$(arg serverIP)"/>
+  </include>
+
+  <node name="markerTarget" pkg="robot_arm_motion" type="markerTargetNode" output="screen">
+
+    <!-- Remapping of topics -->
+    <remap from="/vrpn_client_node/hand/pose" to="/vrpn_client_node/$(arg markerName)/pose"/>
+    <remap from="/vrpn_client_node/robot_right/pose" to="/vrpn_client_node/$(arg robotMarker)/pose"/>
+    <remap from="/lwr/ee_pose" to="/$(arg robotName)/ee_pose"/>
+    <remap from="/target" to="/robot_arm_motion/target"/>
+  </node>
+
+  <node name="robotDSMotion" pkg="robot_arm_motion" type="rds_motion" output="screen">
+
+    <!-- Remapping of topics -->
+    <remap from="/lwr/ee_pose" to="/$(arg robotName)/ee_pose"/>
+    <remap from="/lwr/ee_vel" to="/$(arg robotName)/ee_vel"/>
+    <remap from="/lwr/joint_controllers/passive_ds_command_vel" to="/$(arg robotName)/joint_controllers/passive_ds_command_vel"/>
+    <remap from="/lwr/joint_controllers/passive_ds_command_orient" to="/$(arg robotName)/joint_controllers/passive_ds_command_orient"/>
+    <remap from="/target" to="/robot_arm_motion/target"/>
+  </node>
+
+</launch>
