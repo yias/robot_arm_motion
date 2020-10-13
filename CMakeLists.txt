@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   sensor_msgs
   dynamic_reconfigure
+  message_generation
 #  lpv
   # motion_generators
   utils
@@ -31,6 +32,18 @@ generate_dynamic_reconfigure_options(
   cfg/config.cfg
 )
 
+add_message_files(
+  FILES
+  sobs.msg
+  obstacle_msg.msg
+)
+
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+  geometry_msgs
+)
+
 ###################################
 ## catkin specific configuration ##
 ###################################
@@ -38,7 +51,7 @@ generate_dynamic_reconfigure_options(
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES robot_arm_motion
- CATKIN_DEPENDS mathlib roscpp std_msgs #lpv
+ CATKIN_DEPENDS mathlib roscpp message_runtime std_msgs #lpv
  DEPENDS system_lib #Eigen3
 )
 
@@ -104,4 +117,6 @@ add_dependencies(obstacleAvoidance ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_
 # add_dependencies(target_locator ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 # add_dependencies(target_locator ${catkin_EXPORTED_TARGETS})
 
-
+add_executable(fake_target_publisher src/fake_target_node.cpp)
+target_link_libraries(fake_target_publisher PUBLIC ${catkin_LIBRARIES})
+add_dependencies(fake_target_publisher ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})

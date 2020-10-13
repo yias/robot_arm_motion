@@ -12,12 +12,24 @@ void DSObstacleAvoidance::setObstacle(Obstacle &obs)
 	// ROS_INFO_STREAM("Obstacle parameters recieved.");
 }
 
-void DSObstacleAvoidance::addOstacle(Obstacle &obs){
+void DSObstacleAvoidance::addObstacle(Obstacle &obs){
 	Obstacle t_obs = obs;
 	t_obs._a = t_obs._a*t_obs._safetyFactor;
 	_obstacles.push_back(t_obs);
 	_gammas.push_back(0.0);
 	_basisMatrixes.push_back(Eigen::Matrix3f());
+}
+
+void DSObstacleAvoidance::addObstacles(std::vector<Obstacle> obstacles){
+	for (size_t i=0; i<obstacles.size(); i++){
+		addObstacle(obstacles[i]);
+	}
+}
+
+void DSObstacleAvoidance::clearObstacles(){
+	_obstacles.clear();
+	_gammas.clear();
+	_basisMatrixes.clear();
 }
 
 Eigen::Vector3f DSObstacleAvoidance::obsModulationEllipsoid(Eigen::Vector3f x, Eigen::Vector3f xd, bool bContour)
@@ -65,8 +77,8 @@ Eigen::Vector3f DSObstacleAvoidance::obsModulationEllipsoid(Eigen::Vector3f x, E
 		_modulationMatrix = _rotationMatrix*_basisMatrixes[i]*(eig_vals.asDiagonal())*(_basisMatrixes[i].inverse())*_rotationMatrix.transpose()*_modulationMatrix;
 	}
 
-	std::cout << "modulation matrix\n";
-	std::cout<<_modulationMatrix<<std::endl;
+	// std::cout << "modulation matrix\n";
+	// std::cout<<_modulationMatrix<<std::endl;
 
 	// d0.setConstant(1.0f);
 	// d0(0) = -1.0f;

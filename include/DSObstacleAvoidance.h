@@ -31,7 +31,11 @@ class DSObstacleAvoidance
 
 		void setObstacle(Obstacle &obs);
 
-		void addOstacle(Obstacle &obs);
+		void addObstacle(Obstacle &obs);
+
+		void addObstacles(std::vector<Obstacle> obstacles);
+
+		void clearObstacles();
 
 		Eigen::Vector3f obsModulationEllipsoid(Eigen::Vector3f x, Eigen::Vector3f xd, bool bContour);
 
