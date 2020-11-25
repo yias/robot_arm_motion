@@ -5,9 +5,9 @@
   <arg name="robotName" default="lwr" />
   <arg name="serverIP" default="128.178.145.104" />
   
-  <include file="$(find robot_arm_motion)/launch/mocap.launch">
+  <!-- <include file="$(find robot_arm_motion)/launch/mocap.launch">
     <arg name="server" default="$(arg serverIP)"/>
-  </include>
+  </include> -->
 
   <node name="markerTarget" pkg="robot_arm_motion" type="markerTargetNode" output="screen">
 
