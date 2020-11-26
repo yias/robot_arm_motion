@@ -57,12 +57,12 @@ class gaze_oRec(object):
         self.fake_target = -1
 
         # define alpha and power term for the obstacles (fixed for all the obstacles)
-        self.obs_alpha = [0.1, 0.2, 0.1]
+        self.obs_alpha = [0.2, 0.3, 0.2]
         self.obs_power_term = [1.0, 1.0, 1.0]
 
-        # define tranformation from aruco-board frame to robot-frame (only position)
-        self.tf_aruco_robot = np.array(tf_aruco_robot)
-        self.rot_mat = self.euler2rotMat(rot_aruco_robot)
+        # compute tranformation from aruco-board frame to robot-frame
+        # self.tf_aruco_robot = np.array(tf_aruco_robot)
+        # self.rot_mat = self.euler2rotMat(rot_aruco_robot)
         self.tf_mat = self.compTF(rot_aruco_robot, tf_aruco_robot)
 
         # define the obstacles' z-coordinate (fixed for all the obstacles)
@@ -72,7 +72,7 @@ class gaze_oRec(object):
         self.obs_orient = [0.0, 0.0, 1.0, 0.0]
 
         # define the target's z-coordinate
-        self.target_z = 0.3
+        self.target_z = 0.5
 
         # define the target's orientation in quaternions - wxyz
         self.target_orient = [0.0, 0.0, 1.0, 0.0]
