@@ -1,0 +1,10 @@
+<launch>
+
+  <rosparam file="$(find robot_arm_motion)/cfg/eRes_params.yaml" />
+
+  <node name="gaze_od" pkg="robot_arm_motion" type="eRes_receiver.py" output="screen">
+   
+  </node>
+
+
+</launch>

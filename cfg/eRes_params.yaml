@@ -1,0 +1,3 @@
+ss_serverIP: '128.178.145.15'
+ss_serverPort: 10353
+tf_aruco_robot: [0.0, 0.0, -0.3]
