@@ -16,6 +16,7 @@ import time
 
 import rospy
 import geometry_msgs.msg
+from std_msgs.msg import Int8
 from robot_arm_motion.msg import obstacle_msg
 from robot_arm_motion.msg import sobs
 
@@ -40,12 +41,19 @@ class gaze_oRec(object):
                                           geometry_msgs.msg.Pose, queue_size=1)
 
         # define ros subscriber for the robot pose
-        self.target_pub = rospy.Subscriber('/lwr/ee_pose',
-                                           geometry_msgs.msg.Pose, self.get_robot_pose)
+        self.robot_sub = rospy.Subscriber('/lwr/ee_pose',
+                                          geometry_msgs.msg.Pose, self.get_robot_pose)
+
+        # define fake-target subscriber for debugging
+        self.fake_target_sub = rospy.Subscriber(
+            '/fake_target', Int8, self.get_fake_target)
 
         # set initial values for robot position and orientation (wxyz)
         self.robot_ee_Position = np.array([0.0, 0.0, 0.0])
         self.robot_ee_Orientation = np.array([0.0, 0.0, 0.0, 0.0])
+
+        # set initial value for the fake target
+        self.fake_target = -1
 
         # define alpha and power term for the obstacles (fixed for all the obstacles)
         self.obs_alpha = [0.1, 0.2, 0.1]
@@ -71,12 +79,27 @@ class gaze_oRec(object):
             svrIP=svrIP, svrPort=svrPort, socketStreamMode=1)
 
     def get_robot_pose(self, msg):
+        """ 
+        Callback function for receiving the robot pose
+
+        """
         self.robot_ee_Position = np.array(
             [msg.position.x, msg.position.y, msg.position.z])
         self.robot_ee_Orientation = np.array(
             [msg.orientation.w, msg.orientation.x, msg.orientation.y, msg.orientation.z])
 
+    def get_fake_target(self, msg):
+        """ 
+        Callback function for receiving the fake target
+
+        """
+        self.fake_target = msg.data
+
     def run(self):
+        """ 
+        running the node
+
+        """
         # initialize socketStream server and launch it
         self.everything_ok = False
         if self.sockHndlr.initialize_socketStream() == 0:
@@ -120,30 +143,48 @@ class gaze_oRec(object):
 
                             # set the properties of the obstacles in the message
                             for i in range(nb_obstacles):
-                                tmp_obstacle = sobs()
-                                tmp_obstacle.alpha = self.obs_alpha
-                                tmp_obstacle.power_terms = self.obs_power_term
+                                # if a fake target is received, exclude the corresponding obstacle to be set as target
+                                if i != self.fake_target:
+                                    tmp_obstacle = sobs()
+                                    tmp_obstacle.alpha = self.obs_alpha
+                                    tmp_obstacle.power_terms = self.obs_power_term
 
-                                tmp_obstacle.pose.position.x = obj_locations[i, 0]
-                                tmp_obstacle.pose.position.y = obj_locations[i, 1]
-                                tmp_obstacle.pose.position.z = obj_locations[i, 2]
+                                    tmp_obstacle.pose.position.x = obj_locations[i, 0]
+                                    tmp_obstacle.pose.position.y = obj_locations[i, 1]
+                                    tmp_obstacle.pose.position.z = obj_locations[i, 2]
 
-                                tmp_obstacle.pose.orientation.w = self.obs_orient[0]
-                                tmp_obstacle.pose.orientation.x = self.obs_orient[1]
-                                tmp_obstacle.pose.orientation.y = self.obs_orient[2]
-                                tmp_obstacle.pose.orientation.z = self.obs_orient[3]
-                                obs_msg.obstacles.append(tmp_obstacle)
+                                    tmp_obstacle.pose.orientation.w = self.obs_orient[0]
+                                    tmp_obstacle.pose.orientation.x = self.obs_orient[1]
+                                    tmp_obstacle.pose.orientation.y = self.obs_orient[2]
+                                    tmp_obstacle.pose.orientation.z = self.obs_orient[3]
+                                    obs_msg.obstacles.append(tmp_obstacle)
 
+                            # add the time stamp to the header of the obs_msg
                             now = rospy.get_rostime()
                             obs_msg.header.stamp.secs = now.secs
                             obs_msg.header.stamp.nsecs = now.nsecs
+                            # publish the message
                             self.obs_pub.publish(obs_msg)
 
+                            # if the received coordinates for the object of interest are not zero,
+                            # set the object of interest as target and publish the message
                             if target_location[0] != 0 and target_location[0] != 0:
                                 target_msg = geometry_msgs.msg.Pose()
                                 target_msg.position.x = target_location[0]
                                 target_msg.position.y = target_location[1]
                                 target_msg.position.z = target_location[2]
+                                target_msg.orientation.w = self.target_orient[0]
+                                target_msg.orientation.x = self.target_orient[1]
+                                target_msg.orientation.y = self.target_orient[2]
+                                target_msg.orientation.z = self.target_orient[3]
+                                self.target_pub.publish(target_msg)
+
+                            # if a fake target is received, set the corresponding obstacle as target (for debugging)
+                            if self.fake_target >= 0 and self.fake_target < nb_obstacles:
+                                target_msg = geometry_msgs.msg.Pose()
+                                target_msg.position.x = obj_locations[self.fake_target, 0]
+                                target_msg.position.y = obj_locations[self.fake_target, 1]
+                                target_msg.position.z = obj_locations[self.fake_target, 2]
                                 target_msg.orientation.w = self.target_orient[0]
                                 target_msg.orientation.x = self.target_orient[1]
                                 target_msg.orientation.y = self.target_orient[2]
