@@ -3,14 +3,15 @@
     developer: Iason Batzianoulis
     maintaner: Iason Batzianoulis
     email: iasonbatz@gmail.com
-    description: 
+    description:
     This scripts launches a socketStream server which receives messages from the gaze client (socketStream client) and publishes the data to a ros-topic
 """
 
+import sys
 import argparse
 import numpy as np
 import numpy.matlib
-import sys
+from scipy.spatial.transform import Rotation as Rot
 from socketStream_py import socketStream
 import time
 
@@ -22,13 +23,13 @@ from robot_arm_motion.msg import sobs
 
 
 class gaze_oRec(object):
-    """ 
-        Receive from gaze tracker. 
+    """
+        Receive from gaze tracker.
         Send obstacles and target to the robot
 
     """
 
-    def __init__(self, svrIP='localhost', svrPort=10352, tf_aruco_robot=[0.0, 0.0, 0.0]):
+    def __init__(self, svrIP='localhost', svrPort=10352, tf_aruco_robot=[0.0, 0.0, 0.0], rot_aruco_robot=[0.0, 0.0, 0.0]):
         # define ros node
         rospy.init_node('gaze_od', anonymous=True)
 
@@ -61,6 +62,8 @@ class gaze_oRec(object):
 
         # define tranformation from aruco-board frame to robot-frame (only position)
         self.tf_aruco_robot = np.array(tf_aruco_robot)
+        self.rot_mat = self.euler2rotMat(rot_aruco_robot)
+        self.tf_mat = self.compTF(rot_aruco_robot, tf_aruco_robot)
 
         # define the obstacles' z-coordinate (fixed for all the obstacles)
         self.obs_z = 0.2
@@ -79,7 +82,7 @@ class gaze_oRec(object):
             svrIP=svrIP, svrPort=svrPort, socketStreamMode=1)
 
     def get_robot_pose(self, msg):
-        """ 
+        """
         Callback function for receiving the robot pose
 
         """
@@ -89,14 +92,40 @@ class gaze_oRec(object):
             [msg.orientation.w, msg.orientation.x, msg.orientation.y, msg.orientation.z])
 
     def get_fake_target(self, msg):
-        """ 
+        """
         Callback function for receiving the fake target
 
         """
         self.fake_target = msg.data
 
+    def euler2rotMat(self, eulerAngles):
+        """
+        compute the rotation matrix from euler angles
+
+        """
+        # convertion to radians
+        eulerAngles = np.array(eulerAngles) * np.pi / 180.0
+
+        # computing the rotation matrix
+        rr = np.array([[np.cos(eulerAngles[0]) * np.cos(eulerAngles[1]), np.cos(eulerAngles[0]) * np.sin(eulerAngles[1]) * np.sin(eulerAngles[2]) - (np.sin(eulerAngles[0]) * np.cos(eulerAngles[2])), np.cos(eulerAngles[0]) * np.sin(eulerAngles[1]) * np.cos(eulerAngles[2]) + (np.sin(eulerAngles[0]) * np.sin(eulerAngles[2]))],
+                       [np.sin(eulerAngles[0]) * np.cos(eulerAngles[1]), np.sin(eulerAngles[0]) * np.sin(eulerAngles[1]) * np.sin(eulerAngles[2]) + (np.cos(eulerAngles[0]) *
+                                                                                                                                                     np.cos(eulerAngles[2])), np.sin(eulerAngles[0]) * np.sin(eulerAngles[1]) * np.cos(eulerAngles[2]) - (np.cos(eulerAngles[0]) * np.sin(eulerAngles[2]))],
+                       [-np.sin(eulerAngles[1]), np.cos(eulerAngles[1]) * np.sin(eulerAngles[2]), np.cos(eulerAngles[1]) * np.cos(eulerAngles[2])]])
+
+        return rr
+
+    def compTF(self, eulerAngles, position):
+        """
+        compute the transformation matrix from euler angles and position
+
+        """
+        rotMat = self.euler2rotMat(eulerAngles)
+        tf_mat = np.hstack([rotMat, np.array(position).reshape(3, 1)])
+        tf_mat = np.vstack([tf_mat, np.array([0.0, 0.0, 0.0, 1.0])])
+        return(tf_mat)
+
     def run(self):
-        """ 
+        """
         running the node
 
         """
@@ -117,16 +146,49 @@ class gaze_oRec(object):
                             # retrieve the obstacles from the socketStream message
                             obsData = tt['obj_location']
                             obj_locations = np.array(obsData, dtype=np.float32)
-
                             # get the number of obstacles
                             nb_obstacles = obj_locations.shape[0]
                             print("nb obstacles: ", nb_obstacles)
-                            # convert from cm to meters and append a column for the z-coordinate
-                            obj_locations = np.hstack(
-                                [obj_locations / 100, np.ones((nb_obstacles, 1))*self.obs_z])
-                            # transform obstacles to the robot-frame
-                            obj_locations += np.matlib.repmat(
-                                self.tf_aruco_robot, nb_obstacles, 1)
+
+                            # if at least one obstacle is found
+                            if nb_obstacles != 0:
+
+                                # convert from cm to meters and append a column for the z-coordinate
+                                obj_locations = np.hstack(
+                                    [obj_locations / 100, np.ones((nb_obstacles, 1))*self.obs_z])
+                                # transform obstacles to the robot-frame
+                                obj_locations = np.hstack([
+                                    obj_locations, np.ones((nb_obstacles, 1))])
+                                obj_locations = np.transpose(
+                                    np.dot(self.tf_mat, np.transpose(obj_locations)))
+
+                                # define the message to be published
+                                obs_msg = obstacle_msg()
+
+                                # set the properties of the obstacles in the message
+                                for i in range(nb_obstacles):
+                                    # if a fake target is received, exclude the corresponding obstacle to be set as target
+                                    if i != self.fake_target:
+                                        tmp_obstacle = sobs()
+                                        tmp_obstacle.alpha = self.obs_alpha
+                                        tmp_obstacle.power_terms = self.obs_power_term
+
+                                        tmp_obstacle.pose.position.x = obj_locations[i, 0]
+                                        tmp_obstacle.pose.position.y = obj_locations[i, 1]
+                                        tmp_obstacle.pose.position.z = obj_locations[i, 2]
+
+                                        tmp_obstacle.pose.orientation.w = self.obs_orient[0]
+                                        tmp_obstacle.pose.orientation.x = self.obs_orient[1]
+                                        tmp_obstacle.pose.orientation.y = self.obs_orient[2]
+                                        tmp_obstacle.pose.orientation.z = self.obs_orient[3]
+                                        obs_msg.obstacles.append(tmp_obstacle)
+
+                                # add the time stamp to the header of the obs_msg
+                                now = rospy.get_rostime()
+                                obs_msg.header.stamp.secs = now.secs
+                                obs_msg.header.stamp.nsecs = now.nsecs
+                                # publish the message
+                                self.obs_pub.publish(obs_msg)
 
                             # retrieve the  object of interest from message (defined as the target)
                             targetData = tt['oboi']
@@ -137,34 +199,10 @@ class gaze_oRec(object):
                             target_location = np.hstack(
                                 [target_location / 100, self.target_z])
                             # transform target to the robot-frame
-                            target_location += self.tf_aruco_robot
-                            # define the message to be published
-                            obs_msg = obstacle_msg()
-
-                            # set the properties of the obstacles in the message
-                            for i in range(nb_obstacles):
-                                # if a fake target is received, exclude the corresponding obstacle to be set as target
-                                if i != self.fake_target:
-                                    tmp_obstacle = sobs()
-                                    tmp_obstacle.alpha = self.obs_alpha
-                                    tmp_obstacle.power_terms = self.obs_power_term
-
-                                    tmp_obstacle.pose.position.x = obj_locations[i, 0]
-                                    tmp_obstacle.pose.position.y = obj_locations[i, 1]
-                                    tmp_obstacle.pose.position.z = obj_locations[i, 2]
-
-                                    tmp_obstacle.pose.orientation.w = self.obs_orient[0]
-                                    tmp_obstacle.pose.orientation.x = self.obs_orient[1]
-                                    tmp_obstacle.pose.orientation.y = self.obs_orient[2]
-                                    tmp_obstacle.pose.orientation.z = self.obs_orient[3]
-                                    obs_msg.obstacles.append(tmp_obstacle)
-
-                            # add the time stamp to the header of the obs_msg
-                            now = rospy.get_rostime()
-                            obs_msg.header.stamp.secs = now.secs
-                            obs_msg.header.stamp.nsecs = now.nsecs
-                            # publish the message
-                            self.obs_pub.publish(obs_msg)
+                            target_location = np.hstack(
+                                [target_location, 1.0])
+                            target_location = np.dot(
+                                self.tf_mat, target_location.reshape(4, 1))
 
                             # if the received coordinates for the object of interest are not zero,
                             # set the object of interest as target and publish the message
@@ -207,12 +245,15 @@ if __name__ == '__main__':
     svrIP = rospy.get_param("/ss_serverIP")
     svrPort = rospy.get_param("/ss_serverPort")
 
-    # get the transformation from aruco-board to robot-frame
-    tf_arc_robot = rospy.get_param("/tf_aruco_robot")
+    # get the translation from aruco-board frame to robot-frame
+    tf_arc_robot = rospy.get_param("/aruco_position")
+
+    # get the rotation of the robot-frame to the frame of the aruco-board
+    rot_arc_robot = rospy.get_param("/frame_rotations")
 
     # define a gaze_oRec object
     eRes_handler = gaze_oRec(
-        svrIP=svrIP, svrPort=svrPort, tf_aruco_robot=tf_arc_robot)
+        svrIP=svrIP, svrPort=svrPort, tf_aruco_robot=tf_arc_robot, rot_aruco_robot=rot_arc_robot)
 
     # run the node
     eRes_handler.run()

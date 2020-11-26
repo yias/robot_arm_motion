@@ -1,3 +1,6 @@
 ss_serverIP: '128.178.145.15'
-ss_serverPort: 10353
-tf_aruco_robot: [0.0, 0.0, -0.3]
+ss_serverPort: 10352
+aruco_position: # the position of the frame of the aruco-board with respect to the robot frame
+  [-1.0, 0.09, -0.24]
+frame_rotations: # rotation of the frame of the aruco-board with respect to the robot frame, euler angles (degrees), rotation by ZYX
+  [90.0, 0.0, 180.0] 
