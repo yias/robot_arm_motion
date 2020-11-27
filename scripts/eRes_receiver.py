@@ -37,7 +37,7 @@ class gaze_oRec(object):
         self.obs_pub = rospy.Publisher('/obstacles',
                                        obstacle_msg, queue_size=1)
 
-        # define ros publisher for obstacles
+        # define ros publisher for target
         self.target_pub = rospy.Publisher('/target',
                                           geometry_msgs.msg.Pose, queue_size=1)
 
@@ -57,12 +57,10 @@ class gaze_oRec(object):
         self.fake_target = -1
 
         # define alpha and power term for the obstacles (fixed for all the obstacles)
-        self.obs_alpha = [0.2, 0.3, 0.2]
+        self.obs_alpha = [0.2, 0.2, 0.35]
         self.obs_power_term = [1.0, 1.0, 1.0]
 
         # compute tranformation from aruco-board frame to robot-frame
-        # self.tf_aruco_robot = np.array(tf_aruco_robot)
-        # self.rot_mat = self.euler2rotMat(rot_aruco_robot)
         self.tf_mat = self.compTF(rot_aruco_robot, tf_aruco_robot)
 
         # define the obstacles' z-coordinate (fixed for all the obstacles)
@@ -222,7 +220,7 @@ class gaze_oRec(object):
                                 target_msg = geometry_msgs.msg.Pose()
                                 target_msg.position.x = obj_locations[self.fake_target, 0]
                                 target_msg.position.y = obj_locations[self.fake_target, 1]
-                                target_msg.position.z = obj_locations[self.fake_target, 2]
+                                target_msg.position.z = obj_locations[self.fake_target, 2] + 0.4
                                 target_msg.orientation.w = self.target_orient[0]
                                 target_msg.orientation.x = self.target_orient[1]
                                 target_msg.orientation.y = self.target_orient[2]

@@ -138,7 +138,7 @@ int main(int argc, char** argv)
 
     // Eigen::Vector3d CurrentPos(0);
 
-    Eigen::MatrixXf A_tmp;
+    // Eigen::MatrixXf A_tmp;
 
     Eigen::VectorXf xD(3);
     Eigen::Vector3f _vd;
@@ -175,8 +175,8 @@ int main(int argc, char** argv)
             }
 
             // Bound desired velocity
-            if (_vd.norm() > 0.4f) {
-                _vd = _vd * 0.4f / xD.norm();
+            if (_vd.norm() > 0.3f) {
+                _vd = _vd * 0.3f / xD.norm();
             }
 
             // std::cout << "xD:" << xD[0] << " " << xD[1] << " " << xD[2] <<"\n";
