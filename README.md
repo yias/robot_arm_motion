@@ -52,3 +52,13 @@ Optional (recommended) arguments:
 ```bash
 $rosrun robot_arm_motion obstacleAvoidance
 ```
+- For the integration with gaze-tracker and object detection (the package is in the folder gaze of the eurekaRes repo [here](https://github.com/yias/eurekaRes)), run:
+
+```bash
+$roslaunch robot_arm_motion gaze_obstacle_avoidance.launch
+```
+
+and on another terminal, run:
+```bash
+$rosrun robot_arm_motion obstacleAvoidance
+```
