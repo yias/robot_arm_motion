@@ -161,7 +161,7 @@ int main(int argc, char** argv)
 
     while (ros::ok()) {
 
-        if (_firstRealPoseReceived) {
+        if (_firstRealPoseReceived && _firstTargetPoseReceived) {
 
             xD = W_M * (_eePosition - _targetPosition);
 
@@ -175,8 +175,8 @@ int main(int argc, char** argv)
             }
 
             // Bound desired velocity
-            if (_vd.norm() > 0.3f) {
-                _vd = _vd * 0.3f / xD.norm();
+            if (_vd.norm() > 0.1f) {
+                _vd = _vd * 0.1f / xD.norm();
             }
 
             // std::cout << "xD:" << xD[0] << " " << xD[1] << " " << xD[2] <<"\n";

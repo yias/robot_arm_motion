@@ -57,20 +57,20 @@ class gaze_oRec(object):
         self.fake_target = -1
 
         # define alpha and power term for the obstacles (fixed for all the obstacles)
-        self.obs_alpha = [0.2, 0.2, 0.35]
+        self.obs_alpha = [0.2, 0.5, 0.25]
         self.obs_power_term = [1.0, 1.0, 1.0]
 
         # compute tranformation from aruco-board frame to robot-frame
         self.tf_mat = self.compTF(rot_aruco_robot, tf_aruco_robot)
 
         # define the obstacles' z-coordinate (fixed for all the obstacles)
-        self.obs_z = 0.2
+        self.obs_z = 0.24
 
         # define the obstacles' orientation in quaternions - wxyz (fixed for all the obstacles)
         self.obs_orient = [0.0, 0.0, 1.0, 0.0]
 
         # define the target's z-coordinate
-        self.target_z = 0.5
+        self.target_z = 0.4
 
         # define the target's orientation in quaternions - wxyz
         self.target_orient = [0.0, 0.0, 1.0, 0.0]
@@ -153,7 +153,7 @@ class gaze_oRec(object):
 
                                 # convert from cm to meters and append a column for the z-coordinate
                                 obj_locations = np.hstack(
-                                    [obj_locations / 100, np.ones((nb_obstacles, 1))*self.obs_z])
+                                    [obj_locations / 100, np.zeros((nb_obstacles, 1))])
                                 # transform obstacles to the robot-frame
                                 obj_locations = np.hstack([
                                     obj_locations, np.ones((nb_obstacles, 1))])
@@ -173,7 +173,9 @@ class gaze_oRec(object):
 
                                         tmp_obstacle.pose.position.x = obj_locations[i, 0]
                                         tmp_obstacle.pose.position.y = obj_locations[i, 1]
-                                        tmp_obstacle.pose.position.z = obj_locations[i, 2]
+                                        # + self.obs_z
+                                        tmp_obstacle.pose.position.z = obj_locations[i,
+                                                                                     2] + self.obs_z
 
                                         tmp_obstacle.pose.orientation.w = self.obs_orient[0]
                                         tmp_obstacle.pose.orientation.x = self.obs_orient[1]
@@ -188,44 +190,47 @@ class gaze_oRec(object):
                                 # publish the message
                                 self.obs_pub.publish(obs_msg)
 
-                            # retrieve the  object of interest from message (defined as the target)
-                            targetData = tt['oboi']
-                            target_location = np.array(
-                                targetData, dtype=np.float32)
+                                # retrieve the  object of interest from message (defined as the target)
+                                targetData = tt['oboi']
+                                target_location = np.array(
+                                    targetData, dtype=np.float32)
+                                print('target_location', target_location)
+                                if target_location[0] != 0 and target_location[0] != 0:
 
-                            # convert from cm to meters and append a column for the z-coordinate
-                            target_location = np.hstack(
-                                [target_location / 100, self.target_z])
-                            # transform target to the robot-frame
-                            target_location = np.hstack(
-                                [target_location, 1.0])
-                            target_location = np.dot(
-                                self.tf_mat, target_location.reshape(4, 1))
+                                    # convert from cm to meters and append a column for the z-coordinate
+                                    target_location = np.hstack(
+                                        [target_location / 100, 0])
+                                    # transform target to the robot-frame
+                                    target_location = np.hstack(
+                                        [target_location, 1.0])
+                                    target_location = np.dot(
+                                        self.tf_mat, target_location.reshape(4, 1))
 
-                            # if the received coordinates for the object of interest are not zero,
-                            # set the object of interest as target and publish the message
-                            if target_location[0] != 0 and target_location[0] != 0:
-                                target_msg = geometry_msgs.msg.Pose()
-                                target_msg.position.x = target_location[0]
-                                target_msg.position.y = target_location[1]
-                                target_msg.position.z = target_location[2]
-                                target_msg.orientation.w = self.target_orient[0]
-                                target_msg.orientation.x = self.target_orient[1]
-                                target_msg.orientation.y = self.target_orient[2]
-                                target_msg.orientation.z = self.target_orient[3]
-                                self.target_pub.publish(target_msg)
+                                    # if the received coordinates for the object of interest are not zero,
+                                    # set the object of interest as target and publish the message
 
-                            # if a fake target is received, set the corresponding obstacle as target (for debugging)
-                            if self.fake_target >= 0 and self.fake_target < nb_obstacles:
-                                target_msg = geometry_msgs.msg.Pose()
-                                target_msg.position.x = obj_locations[self.fake_target, 0]
-                                target_msg.position.y = obj_locations[self.fake_target, 1]
-                                target_msg.position.z = obj_locations[self.fake_target, 2] + 0.4
-                                target_msg.orientation.w = self.target_orient[0]
-                                target_msg.orientation.x = self.target_orient[1]
-                                target_msg.orientation.y = self.target_orient[2]
-                                target_msg.orientation.z = self.target_orient[3]
-                                self.target_pub.publish(target_msg)
+                                    target_msg = geometry_msgs.msg.Pose()
+                                    target_msg.position.x = target_location[0]
+                                    target_msg.position.y = target_location[1]
+                                    target_msg.position.z = target_location[2] + \
+                                        self.target_z
+                                    target_msg.orientation.w = self.target_orient[0]
+                                    target_msg.orientation.x = self.target_orient[1]
+                                    target_msg.orientation.y = self.target_orient[2]
+                                    target_msg.orientation.z = self.target_orient[3]
+                                    self.target_pub.publish(target_msg)
+
+                                # if a fake target is received, set the corresponding obstacle as target (for debugging)
+                                if self.fake_target >= 0 and self.fake_target < nb_obstacles:
+                                    target_msg = geometry_msgs.msg.Pose()
+                                    target_msg.position.x = obj_locations[self.fake_target, 0]
+                                    target_msg.position.y = obj_locations[self.fake_target, 1]
+                                    target_msg.position.z = obj_locations[self.fake_target, 2] + 0.1
+                                    target_msg.orientation.w = self.target_orient[0]
+                                    target_msg.orientation.x = self.target_orient[1]
+                                    target_msg.orientation.y = self.target_orient[2]
+                                    target_msg.orientation.z = self.target_orient[3]
+                                    self.target_pub.publish(target_msg)
 
                     if rospy.is_shutdown():
                         break
