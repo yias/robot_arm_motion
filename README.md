@@ -55,12 +55,12 @@ $rosrun robot_arm_motion obstacleAvoidance
 
 To run a simulation for the obstacle avoidance, run:
 ```bash
-$roslaunch robot_arm_motion kuka_ostacles.launch
+$roslaunch robot_arm_motion kuka_obstacles.launch
 ```
 
 and from another terminal, run:
 ```bash
-$roslaunch robot_arm_motion obstacleAvoidance
+$rosrun robot_arm_motion obstacleAvoidance
 ```
 
 - For the integration with gaze-tracker and object detection (the package is in the folder gaze of the eurekaRes repo [here](https://github.com/yias/eurekaRes)), run:
