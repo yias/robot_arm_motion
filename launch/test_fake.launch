@@ -1,0 +1,14 @@
+<launch>
+
+    <group ns="target_obstacles_sim">
+        <rosparam file="$(find robot_arm_motion)/cfg/fake_target_obstacles.yaml" />
+
+        <node name="target_publisher" pkg="robot_arm_motion" type="fake_target_publisher" output="screen"/>
+    </group>
+
+    <group>
+        <node name="rviz_kuka" pkg="rviz" type="rviz" args="-d '$(find robot_arm_motion)/cfg/rviz/kuka_objects.rviz'"/>
+    </group>
+
+
+</launch>
