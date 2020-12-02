@@ -83,7 +83,7 @@ void obstacleListener(const robot_arm_motion::obstacle_msg& msg)
         obstacles[i]._x0 << msg.obstacles[i].pose.position.x, msg.obstacles[i].pose.position.y, msg.obstacles[i].pose.position.z; // obstacle position
         obstacles[i]._a << msg.obstacles[i].alpha[0], msg.obstacles[i].alpha[1], msg.obstacles[i].alpha[2]; // obstacle axis lengths
         obstacles[i]._p << msg.obstacles[i].power_terms[0], msg.obstacles[i].power_terms[1], msg.obstacles[i].power_terms[2]; // obstacle power terms
-        obstacles[i]._safetyFactor = 1.5; // safety factor
+        obstacles[i]._safetyFactor = 1.1; // safety factor
         obstacles[i]._rho = 1.1; // reactivity
         obstacles[i]._tailEffect = false;
         obstacles[i]._bContour = true;
@@ -114,7 +114,7 @@ int main(int argc, char** argv)
     ros::Publisher _pubDesiredPose = n.advertise<geometry_msgs::Twist>("/lwr/joint_controllers/passive_ds_command_vel", 10);
     ros::Publisher _pubDesiredOrientation = n.advertise<geometry_msgs::Quaternion>("/lwr/joint_controllers/passive_ds_command_orient", 1);
 
-    ros::Publisher marker_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 10);
+    ros::Publisher marker_pub = n.advertise<visualization_msgs::Marker>("ee_trajectory", 10);
 
     geometry_msgs::Twist _msgDesiredPose;
     geometry_msgs::Quaternion _msgDesiredOrientation;
@@ -175,7 +175,7 @@ int main(int argc, char** argv)
             }
 
             // Bound desired velocity
-            if (_vd.norm() > 0.1f) {
+            if (_vd.norm() > 0.3f) {
                 _vd = _vd * 0.1f / xD.norm();
             }
 

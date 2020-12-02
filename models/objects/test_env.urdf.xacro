@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="test_env.urdf.xacro">
+  <xacro:arg name="origin.x" default="0"/>
+  <xacro:arg name="origin.y" default="0"/>
+  <xacro:arg name="origin.z" default="0"/>
+  <xacro:property name="toolMass" value="0.1"/>
+  <xacro:property name="xOffset" value="-0.5"/>
+  <xacro:property name="toolLength" value="0.40"/>
+  <xacro:property name="toolRadius" value="0.005"/>
+  <xacro:property name="tableLength" value="0.6"/>
+  <xacro:property name="tableWidth" value="1.5"/>
+  <xacro:property name="tableHeight" value="0.6"/>
+  <xacro:property name="torsoXDim" value="383.035"/>
+  <xacro:property name="torsoYDim" value="248.966"/>
+  <xacro:property name="torsoZDim" value="697.53"/>
+  <xacro:property name="torsoScale" value="0.0015"/>
+
+  <link name="world"/>
+
+  <gazebo reference="world">
+    <static>true</static>
+    <turnGravityOff>true</turnGravityOff>
+  </gazebo>
+
+  <!-- Include all models -->
+  <xacro:include filename="$(find fingers_controller)/models/table.urdf.xacro"/>
+
+  <xacro:model_table name="operation_table"
+                    parent="world"
+                    length="${tableLength}"
+                    width="${tableWidth}"
+                    height="${tableHeight}"
+                    plate_thickness="0.1"
+                    color="grey">
+    <origin xyz="${$(arg origin.x)-tableLength/2} ${$(arg origin.y)+tableWidth/2} ${tableHeight}" rpy="0 0 0"/>
+  </xacro:model_table>
+
+
+</robot>

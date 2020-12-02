@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="box">
+    <xacro:property name="PI" value="3.14159265359" />
+    <xacro:property name="bodylength_x" value="0.04" />
+    <xacro:property name="bodylength_y" value="0.14" />
+    <xacro:property name="bodylength_z" value="0.03" />
+    <xacro:property name="width" value="0.025" />
+    <xacro:property name="opacity" value="0.7" />
+    <!-- <xacro:property name="obj_x" value="0.1" />
+    <xacro:property name="obj_y" value="-0.02" />
+    <xacro:property name="obj_z" value="0.105" /> -->
+    <xacro:property name="obj_x" value="0.0" />
+    <xacro:property name="obj_y" value="0.0" />
+    <xacro:property name="obj_z" value="0.0" />
+    <!-- Base link -->
+    <link name="obj_base">
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+    </link>
+    <joint name="joint_x" type="revolute">
+        <axis xyz="1 0 0"/>
+        <limit effort="15" lower="-0.47" upper="0.47" velocity="7"/>
+        <parent link="obj_base"/>
+        <child link="virtual_x"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+    </joint>
+    <link name="virtual_x"/>
+    <!-- </link> -->
+    <joint name="joint_y" type="revolute">
+        <axis xyz="0 1 0"/>
+        <limit effort="15" lower="-0.47" upper="0.47" velocity="7"/>
+        <parent link="virtual_x"/>
+        <child link="virtual_y"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+    </joint>
+    <link name="virtual_y"/>
+    <!-- </link> -->
+    <joint name="joint_z" type="revolute">
+        <axis xyz="0 0 1"/>
+        <limit effort="15" lower="-0.47" upper="0.47" velocity="7"/>
+        <parent link="virtual_y"/>
+        <child link="object_link"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+    </joint>
+    <link name="object_link">
+        <visual>
+            <geometry>
+                <box size="${bodylength_x} ${bodylength_y} ${bodylength_z}"/>
+            </geometry>
+            <origin rpy="0 0 0" xyz="${obj_x} ${obj_y} ${obj_z}"/>
+            <material name="red">
+                <color rgba="0.5 0.2 0.2 ${opacity}"/>
+            </material>
+        </visual>
+        <collision>
+            <geometry>
+                <box size="${bodylength_x} ${bodylength_y} ${bodylength_z}"/>
+            </geometry>
+        </collision>
+    </link>
+</robot>

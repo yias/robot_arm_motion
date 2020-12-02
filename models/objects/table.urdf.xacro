@@ -1,0 +1,110 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  
+<xacro:property name="leg_width" value="0.08" />
+<xacro:property name="border_offset" value="0.055" />
+
+<!-- conversions -->
+<!-- I couldn't make the simulation work with realistic values, so I tweaked the conversion values -->
+<xacro:property name="mm_to_m" value="0.001"/>
+<xacro:property name="mm2_to_m2" value="0.000001"/>
+<xacro:property name="gr_to_Kg" value="0.001"/>
+
+<!-- not so negligible, otherwise simulation fails -->
+<xacro:property name="table_mass" value="${40000*gr_to_Kg}"/>
+<xacro:property name="table_inertia">
+    <origin xyz="0 0 0"/>
+    <mass value="${table_mass}"/>
+    <inertia ixx="${table_mass * 10 * mm2_to_m2}" ixy="0.0" ixz="0.0" iyy="${table_mass * 10 * mm2_to_m2}" iyz="0.0" izz="${table_mass * 10 * mm2_to_m2}"/>
+</xacro:property>
+
+<material name="green">
+    <color rgba="0.0 1.0 0.0 1.0"/>
+</material>
+
+<material name="red">
+    <color rgba="1.0 0.0 0.0 1.0"/>
+</material>
+
+<material name="blue">
+    <color rgba="0.0 0.0 1.0 1.0"/>
+</material>
+
+<material name="grey">
+    <color rgba="0.5 0.5 0.5 1.0"/>
+</material>
+
+<xacro:macro name="table_leg" params="parent name *origin color">
+    <joint name="${name}_joint" type="fixed">
+        <xacro:insert_block name="origin"/>
+        <parent link="${parent}" />
+        <child link="${name}_link" />
+    </joint>
+    <link name="${name}_link">
+        <inertial>
+            <xacro:insert_block name="table_inertia"/>
+        </inertial>
+		<visual>
+			<geometry>
+				<box size="${leg_width/2} -${leg_width} ${height - plate_thickness}"/>
+			</geometry>
+			<material name="${color}"/>
+		</visual>
+		<collision>
+			<geometry>
+				<box size="${leg_width/2} -${leg_width} ${height - plate_thickness}"/>
+			</geometry>
+		</collision>
+    </link>
+
+    <gazebo reference="${name}_link">
+        <!-- <static>true</static> -->
+    </gazebo>
+</xacro:macro>
+
+<xacro:macro name="model_table" params="parent name *origin length width height plate_thickness color">
+    <joint name="${parent}_${name}_base_joint" type="fixed">
+        <xacro:insert_block name="origin"/>
+        <parent link="${parent}"/>
+        <child link="${name}_plate_link"/>
+    </joint>
+    <link name="${name}_plate_link">
+        <inertial>
+            <xacro:insert_block name="table_inertia"/>
+        </inertial>
+        <visual>
+            <origin xyz="${1/2 * length} ${-1/2 * width} ${-1/2 * plate_thickness}"/>
+            <geometry>
+                <box size="${length} ${width} ${plate_thickness}"/>
+			</geometry>
+			<!-- <material name="Vito/LightGrey"/> -->
+            <material name="${color}">
+                <!-- <color rgba="0.0 1.0 0.0 1.0"/> -->
+            </material>
+		</visual>
+        <collision>
+            <origin xyz="${1/2 * length} ${-1/2 * width} ${-1/2 * plate_thickness}"/>
+            <geometry>
+                <box size="${length} ${width} ${plate_thickness}"/>
+            </geometry>
+        </collision>
+    </link>
+    <xacro:table_leg parent="${name}_plate_link" name="${name}_leg_0" color="${color}">
+        <origin xyz="${border_offset} -${border_offset} -${1/2 * (plate_thickness + height)}"/>
+    </xacro:table_leg>
+    <xacro:table_leg parent="${name}_plate_link" name="${name}_leg_1" color="${color}">
+        <origin xyz="${length - border_offset} -${border_offset} -${1/2 * (plate_thickness + height)}"/>
+    </xacro:table_leg>
+    <xacro:table_leg parent="${name}_plate_link" name="${name}_leg_2" color="${color}">
+        <origin xyz="${border_offset} -${width - border_offset} -${1/2 * (plate_thickness + height)}"/>
+    </xacro:table_leg>
+    <xacro:table_leg parent="${name}_plate_link" name="${name}_leg_3" color="${color}">
+        <origin xyz="${length - border_offset} -${width - border_offset} -${1/2 * (plate_thickness + height)}"/>
+    </xacro:table_leg>
+
+    <gazebo reference="${name}_plate_link">
+        <!-- <static>true</static> -->
+    </gazebo>
+    
+</xacro:macro>
+</robot>

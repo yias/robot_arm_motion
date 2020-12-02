@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="cylinder">
+    <xacro:property name="PI" value="3.14159265359" />
+    <xacro:property name="bodylength" value="0.12" />
+    <xacro:property name="width" value="0.025" />
+    <xacro:property name="opacity" value="0.7" />
+    <xacro:property name="obj_x" value="0.1" />
+    <xacro:property name="obj_y" value="-0.02" />
+    <xacro:property name="obj_z" value="0.11" />
+    <!-- Base link -->
+    <link name="obj_base">
+        <origin xyz="0 0 0"/>
+    </link>
+    <joint name="base_joint" type="revolute">
+        <limit effort="15" lower="-0.47" upper="0.47" velocity="7"/>
+        <parent link="obj_base"/>
+        <child link="object_link"/>
+        <origin xyz="0 0 0"/>
+    </joint>
+    <!-- object link -->
+    <link name="object_link">
+        <visual>
+            <geometry>
+                <cylinder length="${bodylength}" radius="${width}"/>
+            </geometry>
+            <origin rpy="${PI/2} 0 0" xyz="${obj_x} ${obj_y} ${obj_z}"/>
+            <material name="green">
+                <color rgba="0.2 0.5 0.2 ${opacity}"/>
+            </material>
+        </visual>
+        <collision>
+            <geometry>
+                <cylinder radius="${width}" length="${bodylength}"/>
+            </geometry>
+        </collision>
+    </link>
+</robot>
