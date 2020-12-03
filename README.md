@@ -35,6 +35,14 @@ $catkin_make
 
 - For the robot to follow a mocap marker, type:
 
+First, launch the mocap node:
+
+```bash
+$roslaunch robot_arm_motion mocap.launch
+```
+
+and then, launch the trajectory generator from another terminal:
+
 ```bash
 $roslaunch robot_arm_motion markerTarget.launch
 ```
