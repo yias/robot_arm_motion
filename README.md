@@ -7,7 +7,7 @@ Robot-Arm motion is a package for controlling the rnd effector of a robot arm. U
 
 Lisence: GNU GPL v3
 
-Copyright (c) 2020 Iason Batzianoulis
+Copyright (c) 2020 Iason Batzianoulis, Learning Algorithms and Systems Laboratory (LASA), EPFL
 
 ## Dependencies
 
