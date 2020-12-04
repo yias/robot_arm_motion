@@ -1,4 +1,8 @@
 /***
+ * 
+ *  Developer:  Iason Batzianoulis
+ *  email:      iasonbatz@gmail.com
+ * 
  *      a node for listening to optitrack markers (rigid bodies)
  *      and define the position and orienation of the target 
  *      with respect to the robot

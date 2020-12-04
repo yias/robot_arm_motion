@@ -1,4 +1,10 @@
-
+/**
+ * 
+ *  Developer:  Iason Batzianoulis
+ *  email:      iasonbatz@gmail.com
+ *  
+ *  
+*/
 
 #include "ros/ros.h"
 #include "std_msgs/String.h"

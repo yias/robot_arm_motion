@@ -1,3 +1,11 @@
+/**
+ * 
+ *  Developer:  Iason Batzianoulis
+ *  email:      iasonbatz@gmail.com
+ *  
+ *  
+*/
+
 #ifndef __DS_OBSTACLE_AVOIDANCE_H__
 #define __DS_OBSTACLE_AVOIDANCE_H__
 

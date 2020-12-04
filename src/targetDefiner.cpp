@@ -1,3 +1,11 @@
+/**
+ * 
+ *  Developer:  Iason Batzianoulis
+ *  email:      iasonbatz@gmail.com
+ *  
+ *  
+*/
+
 #include "ros/ros.h"
 
 #include <geometry_msgs/PoseStamped.h>

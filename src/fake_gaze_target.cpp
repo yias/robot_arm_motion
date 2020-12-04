@@ -1,8 +1,6 @@
 /** 
  *  Copyright (c) 2020 Iason Batzianoulis
  *  
- *  fake_gaze_target source file
- *  
  * 
  *  Developer:  Iason Batzianoulis
  *  email:      iasonbatz@gmail.com
