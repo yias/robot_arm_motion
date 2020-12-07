@@ -66,6 +66,11 @@ To run a simulation for the obstacle avoidance, run:
 $roslaunch robot_arm_motion kuka_obstacles.launch
 ```
 
+To run a simulation of the obstacle avoidance with a gripper, run:
+```bash
+$roslaunch robot_arm_motion kuka_obstacles.launch GRIPPER:=TRUE
+```
+
 and from another terminal, run:
 ```bash
 $rosrun robot_arm_motion obstacleAvoidance

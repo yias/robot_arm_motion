@@ -123,7 +123,7 @@ int main(int argc, char** argv)
 {
 
     // initialize ros node
-    ros::init(argc, argv, "fake_target_publisher");
+    ros::init(argc, argv, "obstacles_visualization");
 
     // define ros node-handler
     ros::NodeHandle n;
@@ -135,24 +135,6 @@ int main(int argc, char** argv)
     ros::Subscriber _subOstacles = n.subscribe("/obstacles", 1, obstaclesListener);
 
     ros::Publisher vis_pub = n.advertise<visualization_msgs::Marker>("/obstacles_visualization", 10);
-
-    // // define ros-message for the obstacles
-    // robot_arm_motion::obstacle_msg obst_msg;
-
-    // // define the message for the target
-    // geometry_msgs::Pose target_msg;
-
-    // // fill the messeges with the parameters of the obstacles
-    // if (parse_obs_params("ram_obstacles_position", "ram_obstacles_orientation", "ram_obstacles_alpha", "ram_obstacles_power_params", &obs_marker_msgs, &obst_msg) < 0) {
-    //     std::cout << "[obstacle-target simulation] Correct the obstacles parameters in yaml file and launch again the node" << std::endl;
-    //     return -1;
-    // }
-
-    // // fill the messeges with the parameters of the target
-    // if (parse_target_params("ram_target_position", "ram_target_orientation", &target_marker, &target_msg) < 0) {
-    //     std::cout << "[obstacle-target simulation] Correct the obstacles parameters in yaml file and launch again the node" << std::endl;
-    //     return -2;
-    // }
 
     ros::Rate loop_rate(100);
 

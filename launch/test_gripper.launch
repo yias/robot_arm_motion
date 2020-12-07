@@ -1,0 +1,28 @@
+<launch>
+
+    <!-- <arg name="OBJECT" default="sphere"/> -->
+    <arg name="GAZE" default="false"/>
+    <arg name="GRIPPER" default="false"/>
+    <arg name="GRIPPER_REAL" default="false"/>
+    
+
+    <group ns="gripper" if="$(arg GRIPPER)">
+        <arg name="gripper_gui" default="False" />
+        <param name="robot_description" command="$(find xacro)/xacro $(find robot_arm_motion)/models/robots/robotiq_arg2f_85_model.xacro" />
+        <param name="use_gui" value="$(arg gripper_gui)"/>
+        <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+        <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+        <node pkg="tf" type="static_transform_publisher" name="kuka_allegro_broadcaster" args="0 0 0 0 0 0 1 lwr_7_link robotiq_arg2f_base_link 100" />
+        <node name="gripper_interface" pkg="robotiq_2f_gripper_control" type="Robotiq2FGripperTcpNode.py" args="192.168.1.11" respawn="true" output="screen" if="$(arg GRIPPER_REAL)"/>
+        <node name="gripper_controller" pkg="robot_arm_motion" type="gripper_controller.py" output="screen" if="$(arg GRIPPER_REAL)"/>
+    </group>
+
+
+    <group>
+        <node name="rviz_kuka" pkg="rviz" type="rviz" args="-d '$(find robot_arm_motion)/cfg/rviz/kuka_objects.rviz'" unless="$(arg GRIPPER)"/>
+
+        <node name="rviz_kuka" pkg="rviz" type="rviz" args="-d '$(find robot_arm_motion)/cfg/rviz/kuka_gripper_objects.rviz'" if="$(arg GRIPPER)"/>
+    </group>
+
+
+</launch>
