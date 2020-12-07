@@ -1,10 +1,11 @@
 <launch>
 
-    <arg name="OBJECT" default="sphere"/>
+    <!-- <arg name="OBJECT" default="sphere"/> -->
+    <arg name="GAZE" default="false"/>
     
 
     <group ns="lwr">
-        <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find single_lwr_robot)/robot/single_lwr_robot.urdf.xacro'"/> 
+        <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find robot_arm_motion)/models/robots/single_lwr_robot.urdf.xacro'"/> 
         <node name="lwr_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen"/>
            
     </group>
@@ -37,10 +38,14 @@
 
     <node name="set_initial_pose" pkg="motion_example" type="moveToDesiredJoints" output="screen" args="30 50 0 -70 0 55 20"/>
 
-    <group ns="target_obstacles_sim">
+    <group ns="target_obstacles_sim" unless="$(arg GAZE)">
         <rosparam file="$(find robot_arm_motion)/cfg/fake_target_obstacles.yaml" />
 
         <node name="target_publisher" pkg="robot_arm_motion" type="fake_target_publisher" output="screen"/>
+    </group>
+
+    <group ns="target_obstacles_sim" if="$(arg GAZE)">
+        <node name="obs_visualization" pkg="robot_arm_motion" type="obstacle_visualization" output="screen" />
     </group>
 
     <group>

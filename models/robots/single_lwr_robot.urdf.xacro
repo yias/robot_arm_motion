@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="single_lwr_robot">
+
+  <xacro:arg name="robot_name" default="lwr"/>
+  <xacro:arg name="robot_world" default="world"/>
+  <xacro:arg name="robot_origin.x" default="0"/>
+  <xacro:arg name="robot_origin.y" default="0"/>
+  <xacro:arg name="robot_origin.z" default="0"/>
+  <xacro:arg name="robot_origin.ax" default="0"/>
+  <xacro:arg name="robot_origin.ay" default="0"/>
+  <xacro:arg name="robot_origin.az" default="0"/>  <!-- Include all models -->
+  <xacro:include filename="$(find lwr_description)/model/kuka_lwr.urdf.xacro"/>
+
+  <xacro:kuka_lwr base_link="$(arg robot_world)" name="$(arg robot_name)">
+    <origin xyz="$(arg robot_origin.x) $(arg robot_origin.y) $(arg robot_origin.z)" rpy="$(arg robot_origin.ax) $(arg robot_origin.ay) $(arg robot_origin.az)"/>
+  </xacro:kuka_lwr>
+</robot>

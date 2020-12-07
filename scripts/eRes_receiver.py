@@ -57,7 +57,7 @@ class gaze_oRec(object):
         self.fake_target = -1
 
         # define alpha and power term for the obstacles (fixed for all the obstacles)
-        self.obs_alpha = [0.2, 0.5, 0.25]
+        self.obs_alpha = [0.1, 0.1, 0.3]
         self.obs_power_term = [1.0, 1.0, 1.0]
 
         # compute tranformation from aruco-board frame to robot-frame
@@ -78,6 +78,8 @@ class gaze_oRec(object):
         # define a socketStream server to handle the communication
         self.sockHndlr = socketStream.socketStream(
             svrIP=svrIP, svrPort=svrPort, socketStreamMode=1)
+
+        self.sockHndlr.setBufferSize(64)
 
     def get_robot_pose(self, msg):
         """
