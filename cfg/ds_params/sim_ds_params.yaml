@@ -1,0 +1,37 @@
+!!python/object/new:dynamic_reconfigure.encoding.Config
+dictitems:
+  bSmooth: true
+  damping_eigval0: 800.0
+  damping_eigval1: 800.0
+  debug: true
+  desiredJointsGain: 0.0
+  groups: !!python/object/new:dynamic_reconfigure.encoding.Config
+    dictitems:
+      bSmooth: true
+      damping_eigval0: 800.0
+      damping_eigval1: 800.0
+      debug: true
+      desiredJointsGain: 0.0
+      groups: !!python/object/new:dynamic_reconfigure.encoding.Config
+        state: []
+      id: 0
+      jointLimitsGain: 1.0
+      jointVelocitiesGain: 0.01
+      name: Default
+      parameters: !!python/object/new:dynamic_reconfigure.encoding.Config
+        state: []
+      parent: 0
+      rot_damping: 2.0
+      rot_stiffness: 50.0
+      smooth_val: 0.01
+      state: true
+      type: ''
+      useNullSpace: true
+    state: []
+  jointLimitsGain: 1.0
+  jointVelocitiesGain: 0.01
+  rot_damping: 2.0
+  rot_stiffness: 50.0
+  smooth_val: 0.01
+  useNullSpace: true
+state: []

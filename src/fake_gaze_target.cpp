@@ -23,9 +23,16 @@
 #include <thread>
 #include <unistd.h>
 
+#include "DSObstacleAvoidance.h"
+
+#include <robot_arm_motion/obstacle_msg.h>
+
 int kb_choice = -1;
 bool isRunning;
 std::mutex threadMutex;
+
+std::vector<Obstacle> obstacles;
+bool _firstObstacleReceived = false;
 
 int kbhit()
 {
@@ -81,6 +88,28 @@ void checkKeyBoard()
     }
 }
 
+void obstacleListener(const robot_arm_motion::obstacle_msg& msg)
+{
+
+    obstacles = std::vector<Obstacle>(msg.obstacles.size());
+
+    for (int i = 0; i < msg.obstacles.size(); i++) {
+        // set the obstacle parameters
+        obstacles[i]._x0 << msg.obstacles[i].pose.position.x, msg.obstacles[i].pose.position.y, msg.obstacles[i].pose.position.z; // obstacle position
+        obstacles[i]._a << msg.obstacles[i].alpha[0], msg.obstacles[i].alpha[1], msg.obstacles[i].alpha[2]; // obstacle axis lengths
+        obstacles[i]._p << msg.obstacles[i].power_terms[0], msg.obstacles[i].power_terms[1], msg.obstacles[i].power_terms[2]; // obstacle power terms
+        obstacles[i]._safetyFactor = 1.1; // safety factor
+        obstacles[i]._rho = 1.1; // reactivity
+        obstacles[i]._tailEffect = false;
+        obstacles[i]._bContour = true;
+    }
+
+    if (!_firstObstacleReceived) {
+        _firstObstacleReceived = true;
+        ROS_INFO("[robot_arm_motion:doa] Obstacles' poses received\n");
+    }
+}
+
 int main(int argc, char** argv)
 {
 
@@ -91,6 +120,8 @@ int main(int argc, char** argv)
     ros::NodeHandle _n;
 
     ros::Publisher fake_target_pub = _n.advertise<std_msgs::Int8>("/fake_target", 1);
+
+    ros::Subscriber obj_sub = _n.subscribe("/obstacles", 1, obstacleListener);
 
     std_msgs::Int8 pub_msg;
 

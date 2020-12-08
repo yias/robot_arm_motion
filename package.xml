@@ -56,6 +56,7 @@
   <!-- <exec_depend>eigen3</exec_depend> -->
   <!-- <exec_depend>lpv</exec_depend> -->
   <exec_depend>utils</exec_depend>
+  <exec_depend>xacro</exec_depend>
   <!-- <exec_depend>gaze_tracking</exec_depend> -->
 
 

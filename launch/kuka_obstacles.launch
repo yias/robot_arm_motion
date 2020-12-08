@@ -50,13 +50,20 @@
         <node name="obs_visualization" pkg="robot_arm_motion" type="obstacle_visualization" output="screen" />
     </group>
 
+    <group ns="finger_tool" unless="$(arg GRIPPER)">
+        <param name="robot_description" command="$(find xacro)/xacro $(find robot_arm_motion)/models/objects/finger_tool.urdf.xacro" />
+        <node pkg="tf" type="static_transform_publisher" name="kuka_tool_broadcaster" args="0 0 0 0 0 0 1 lwr_7_link tool_base 100" />
+        <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+        <!-- <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher"/> -->
+    </group>
+
     <group ns="gripper" if="$(arg GRIPPER)">
         <arg name="gripper_gui" default="Fasle" />
         <param name="robot_description" command="$(find xacro)/xacro $(find robot_arm_motion)/models/robots/robotiq_arg2f_85_model.xacro" />
         <param name="use_gui" value="$(arg gripper_gui)"/>
         <node name="gripper_sim" pkg="robot_arm_motion" type="gripper_sim.py" unless="$(arg GRIPPER_REAL)"/>
         <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
-        <node pkg="tf" type="static_transform_publisher" name="kuka_allegro_broadcaster" args="0 0 0 0 0 0 1 lwr_7_link robotiq_arg2f_base_link 100" />
+        <node pkg="tf" type="static_transform_publisher" name="kuka_tool_broadcaster" args="0 0 0 0 0 0 1 lwr_7_link robotiq_arg2f_base_link 100" />
         <node name="gripper_interface" pkg="robotiq_2f_gripper_control" type="Robotiq2FGripperTcpNode.py" args="192.168.1.11" respawn="true" output="screen" if="$(arg GRIPPER_REAL)"/>
         <node name="gripper_controller" pkg="robot_arm_motion" type="gripper_controller.py" output="screen"/>
     </group>
