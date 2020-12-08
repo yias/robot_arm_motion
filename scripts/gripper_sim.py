@@ -8,19 +8,15 @@
 """
 
 import sys
-import argparse
 import numpy as np
 import numpy.matlib
-from scipy.spatial.transform import Rotation as Rot
-from socketStream_py import socketStream
+# from scipy.spatial.transform import Rotation as Rot
 import time
 
 import rospy
 import geometry_msgs.msg
 from std_msgs.msg import Int8
 from sensor_msgs.msg import JointState
-# from robot_arm_motion.msg import obstacle_msg
-# from robot_arm_motion.msg import sobs
 from robotiq_2f_gripper_control.msg import _Robotiq2FGripper_robot_output as outputMsg
 from robotiq_2f_gripper_control.msg import _Robotiq2FGripper_robot_input as inputMsg
 
