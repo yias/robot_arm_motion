@@ -38,7 +38,7 @@
         <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="joint_controllers"/>
     </group>
 
-    <node name="set_initial_pose" pkg="motion_example" type="moveToDesiredJoints" output="screen" args="30 50 0 -70 0 55 20"/>
+    <node name="set_initial_pose" pkg="motion_example" type="moveToDesiredJoints" output="screen" args="30 40 0 -70 0 70 30"/>
 
     <group ns="target_obstacles_sim" unless="$(arg GAZE)">
         <rosparam file="$(find robot_arm_motion)/cfg/fake_target_obstacles.yaml" />
@@ -54,8 +54,9 @@
         <param name="robot_description" command="$(find xacro)/xacro $(find robot_arm_motion)/models/objects/finger_tool.urdf.xacro" />
         <node pkg="tf" type="static_transform_publisher" name="kuka_tool_broadcaster" args="0 0 0 0 0 0 1 lwr_7_link tool_base 100" />
         <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
-        <!-- <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher"/> -->
     </group>
+
+    <node name="load_dyn_params" pkg="dynamic_reconfigure" type="dynparam" args="load /lwr/joint_controllers/ds_param $(find robot_arm_motion)/cfg/ds_params/sim_ds_params.yaml"/>
 
     <group ns="gripper" if="$(arg GRIPPER)">
         <arg name="gripper_gui" default="Fasle" />

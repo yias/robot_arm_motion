@@ -1,24 +1,19 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="finger_tool">
     <xacro:property name="PI" value="3.14159265359" />
+    <xacro:property name="scale_factor" value="0.001" />
     <!-- Base link -->
     <link name="tool_base">
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <visual>
             <origin xyz="0 0 0" rpy="${PI/2} 0.0 0.0"/>
             <geometry>
-                <mesh filename="package://robot_arm_motion/models/objects/meshes/fingerTool.STL" scale="0.001 0.001 0.001"/>
+                <mesh filename="package://robot_arm_motion/models/objects/meshes/fingerTool.STL" scale="${scale_factor} ${scale_factor} ${scale_factor}"/>
             </geometry>
             <material name="black">
                 <color rgba="0.2 0.2 0.2 1"/>
             </material>
         </visual>
     </link>
-    <!-- <joint name="joint_tool" type="revolute">
-        <axis xyz="0 0 1"/>
-        <limit effort="15" lower="-0.47" upper="0.47" velocity="7"/>
-        <parent link="tool_base"/>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
-    </joint> -->
     
 </robot>

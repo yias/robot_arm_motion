@@ -1,8 +1,8 @@
 !!python/object/new:dynamic_reconfigure.encoding.Config
 dictitems:
   bSmooth: true
-  damping_eigval0: 800.0
-  damping_eigval1: 800.0
+  damping_eigval0: 1200.0
+  damping_eigval1: 1200.0
   debug: true
   desiredJointsGain: 0.0
   groups: !!python/object/new:dynamic_reconfigure.encoding.Config
