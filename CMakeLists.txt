@@ -128,3 +128,7 @@ add_dependencies(fake_gaze_target_publisher ${${PROJECT_NAME}_EXPORTED_TARGETS} 
 add_executable(obstacle_visualization src/visualization_node.cpp)
 target_link_libraries(obstacle_visualization PUBLIC ${catkin_LIBRARIES})
 add_dependencies(obstacle_visualization ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+add_executable(visualize_gripper_orient src/visualize_gripper_orient.cpp)
+target_link_libraries(visualize_gripper_orient PUBLIC ${catkin_LIBRARIES})
+add_dependencies(visualize_gripper_orient ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})

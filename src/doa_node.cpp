@@ -63,14 +63,11 @@ void robotListener(const geometry_msgs::Pose::ConstPtr& msg)
     ee_tranformation.col(3) = tmp_ee;
     ee_tranformation.block(0, 0, 3, 3) = _eeRotMat;
 
-    // std::cout << _eeRotMat << std::endl;
-
     Eigen::Matrix4f tt = ee_tranformation * tool_transformation_mat;
     _eePosition = tt.col(3).head(3);
 
     if (!_firstRealPoseReceived) {
         _firstRealPoseReceived = true;
-        ROS_INFO("[robot_arm_motion:doa] Robot Pose received\n");
     }
 }
 
@@ -85,13 +82,13 @@ void targetListener(const geometry_msgs::Pose::ConstPtr& msg)
     _targetPosition << msg->position.x, msg->position.y, msg->position.z;
     _targetOrientation << msg->orientation.w, msg->orientation.x, msg->orientation.y, msg->orientation.z;
     _targetRotMatrix = Utils<float>::quaternionToRotationMatrix(_targetOrientation);
-
-    std::cout << _targetPosition << std::endl;
     if (!_firstTargetPoseReceived) {
         _firstTargetPoseReceived = true;
         ROS_INFO("[robot_arm_motion:doa] Target Pose received\n");
     }
 }
+
+
 
 void obstacleListener(const robot_arm_motion::obstacle_msg& msg)
 {
@@ -137,12 +134,11 @@ int main(int argc, char** argv)
     // subscriber for receiving the obstacles
     ros::Subscriber _obstaclesSub = n.subscribe("/obstacles", 1, obstacleListener);
 
-    // define publishers for the desired velocity and orientation of the ee of the robot
-    ros::Publisher _pubDesiredPose = n.advertise<geometry_msgs::Twist>("/lwr/joint_controllers/passive_ds_command_vel", 10);
-    ros::Publisher _pubDesiredOrientation = n.advertise<geometry_msgs::Quaternion>("/lwr/joint_controllers/passive_ds_command_orient", 1);
-
     // define a publisher for visualizing the trajectory of the robot ee
     ros::Publisher marker_pub = n.advertise<visualization_msgs::Marker>("ee_trajectory", 10);
+
+    ros::Publisher _pubDesiredPose = n.advertise<geometry_msgs::Twist>("/lwr/joint_controllers/passive_ds_command_vel", 10);
+    ros::Publisher _pubDesiredOrientation = n.advertise<geometry_msgs::Quaternion>("/lwr/joint_controllers/passive_ds_command_orient", 1);
 
     // define a message for the desired velocity
     geometry_msgs::Twist _msgDesiredPose;
@@ -154,9 +150,6 @@ int main(int argc, char** argv)
     visualization_msgs::Marker traj_line;
 
     traj_line.header.frame_id = "/world";
-    traj_line.header.stamp = ros::Time::now();
-    traj_line.ns = "obstacle_avoidance";
-    traj_line.action = visualization_msgs::Marker::ADD;
     traj_line.pose.orientation.w = 1.0;
     traj_line.id = 0;
     traj_line.type = visualization_msgs::Marker::POINTS;
@@ -184,6 +177,15 @@ int main(int argc, char** argv)
     Eigen::Vector3f _vd;
     _vd.setConstant(0.0f);
 
+    // velocity orientation
+    Eigen::Vector3f velUnitVector;
+
+    // velocity orientation matrix
+    Eigen::Matrix3f vel_orient_mat = Eigen::Matrix3f::Zero(3,3);
+
+    // velocity orientation in quaternions
+    Eigen::Vector4f vel_orient_q;
+
     // define the weight-matrix of the original linear dynamical system
     Eigen::MatrixXf W_M(3, 3);
     W_M << -1.0, 0.0, 0.0,
@@ -203,6 +205,9 @@ int main(int argc, char** argv)
 
             // compute the velocity from the original DS
             xD = W_M * (_eePosition - _targetPosition);
+
+            // translation from target
+            Eigen::Vector3f tr_vec = _targetPosition - _eePosition;
 
             // if there are obstacles, modify the velocity according to the modulated DS
             if (_firstObstacleReceived) {
@@ -238,11 +243,28 @@ int main(int argc, char** argv)
             // publish the desired velocity
             _pubDesiredPose.publish(_msgDesiredPose);
 
+            // compute desired velocity orientation
+            velUnitVector = tr_vec / tr_vec.norm();
+
+
+
+            // compute the velocity orientation in quaternions
+            
+            vel_orient_mat = Eigen::AngleAxisf(std::atan2(velUnitVector(1), velUnitVector(0)),Eigen::Vector3f::UnitZ());
+
+            // Eigen::Matrix3f vel_rot_mat_x = Eigen::Matrix3f::Zero(3,3);
+
+            // vel_rot_mat_x = Eigen::AngleAxisf(std::atan2(velUnitVector(2), velUnitVector(0)),Eigen::Vector3f::UnitY());
+
+            // vel_orient_mat = vel_orient_mat*vel_rot_mat_x;
+
+            vel_orient_q = Utils<float>::rotationMatrixToQuaternion(vel_orient_mat);
+
             // update the message with the desired orientation
-            _msgDesiredOrientation.w = _targetOrientation(0);
-            _msgDesiredOrientation.x = _targetOrientation(1);
-            _msgDesiredOrientation.y = _targetOrientation(2);
-            _msgDesiredOrientation.z = _targetOrientation(3);
+            _msgDesiredOrientation.w = vel_orient_q(0);
+            _msgDesiredOrientation.x = vel_orient_q(1);
+            _msgDesiredOrientation.y = vel_orient_q(2);
+            _msgDesiredOrientation.z = vel_orient_q(3);
 
             // Publish desired orientation
             _pubDesiredOrientation.publish(_msgDesiredOrientation);

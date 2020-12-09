@@ -46,21 +46,11 @@ Eigen::Vector3f DSObstacleAvoidance::obsModulationEllipsoid(Eigen::Vector3f x, E
 
 	_rotationMatrix.setIdentity();
 
-	// std::cout << "test1 " << std::endl;
-	// std::cout << "number of obstacles: " << _obstacles.size() << std::endl;
-
-	// x = _rotationMatrix*(x - _obs._x0);
-	// computeBasisMatrix(x);
-
 	
 	for (int i = 0; i<(int)_obstacles.size(); i++){
 		Eigen::Vector3f x_t =  _rotationMatrix*(x - _obstacles[i]._x0);
 		computeBasisMatrix(x_t, i);
 	}
-
-	// std::cout<<_basisMatrixes[0]<<std::endl;
-
-	// std::cout << "number of obstacles: " << _obstacles.size() << std::endl;
 
 	Eigen::Vector3f eig_vals, d0;
 	for (int i = 0; i<(int)_obstacles.size(); ++i){
@@ -80,31 +70,8 @@ Eigen::Vector3f DSObstacleAvoidance::obsModulationEllipsoid(Eigen::Vector3f x, E
 		}
 
 		eig_vals = eig_vals.array() + 1;
-		// std::cout << "modulation matrix before\n";
-		// std::cout<<_modulationMatrix<<std::endl;
 		_modulationMatrix = _rotationMatrix*_basisMatrixes[i]*(eig_vals.asDiagonal())*(_basisMatrixes[i].inverse())*_rotationMatrix.transpose()*_modulationMatrix;
 	}
-
-	// std::cout << "modulation matrix\n";
-	// std::cout<<_modulationMatrix<<std::endl;
-
-	// d0.setConstant(1.0f);
-	// d0(0) = -1.0f;
-	// eig_vals = d0/(pow(_gamma,1.0f/_obs._rho));
-	// if((!_obs._tailEffect) and xd.dot(_rotationMatrix*_basisMatrix.col(0))>=0)
-	// 	eig_vals(0) = 0.0;
-
-	// if(eig_vals(0)<-1.0)
-	// {
-	// 	eig_vals.tail(2).setConstant(1.0f);
-	// 	if(xd.dot(_rotationMatrix*_basisMatrix.col(0))<0)
-	// 		eig_vals(0) = -1.0f;
-	// }
-
-	// eig_vals = eig_vals.array() + 1;
-	// _modulationMatrix = _rotationMatrix*_basisMatrix*(eig_vals.asDiagonal())*(_basisMatrix.inverse())*_rotationMatrix.transpose();
-
-	// _basisMatrix = _rotationMatrix*_basisMatrix;
 
 	if((!bContour) and eig_vals(0)<-0.98 and xd.dot(_basisMatrixes.back().col(0))<0 and (_modulationMatrix*xd).norm()<0.02)
 		bContour = true;
@@ -126,7 +93,6 @@ Eigen::Vector3f DSObstacleAvoidance::obsModulationEllipsoid(Eigen::Vector3f x, E
 	else
 		_modulatedVel = _modulationMatrix*xd;
 	
-	// _obs._bContour = bContour;
 
 	return _modulatedVel;
 }
@@ -140,10 +106,7 @@ void DSObstacleAvoidance::computeBasisMatrix(Eigen::Vector3f x)
 		_gamma += pow(x[i]/_obs._a[i],2*_obs._p[i]);
 		nv[i] = pow(2*(_obs._p[i]/_obs._a[i])*(x[i]/_obs._a[i]),2*_obs._p[i]-1);
 	}
-	// _gamma = ((x.array()/_obs._a.array()).pow(2*_obs._p.array())).sum();
 	_basisMatrix.setConstant(0.0f);
-	// nv = (2*_obs._p.array()/_obs._a.array())*((x.array()/_obs._a.array()).pow(2*_obs._p.array()-1))
-	// ROS_INFO_STREAM("Gamma " << _gamma);
 
 	_basisMatrix.col(0) = nv;
 	_basisMatrix.block(0,1,1,2) = nv.tail(2).transpose();
@@ -162,10 +125,6 @@ void DSObstacleAvoidance::computeBasisMatrix(Eigen::Vector3f x, int nbObj)
 		_gammas[nbObj] += pow(x[i]/_obstacles[nbObj]._a[i],2*_obstacles[nbObj]._p[i]);
 		nv[i] = pow(2*(_obstacles[nbObj]._p[i]/_obstacles[nbObj]._a[i])*(x[i]/_obstacles[nbObj]._a[i]),2*_obstacles[nbObj]._p[i]-1);
 	}
-
-	// _gamma = ((x.array()/_obs._a.array()).pow(2*_obs._p.array())).sum();
-	
-	// nv = (2*_obs._p.array()/_obs._a.array())*((x.array()/_obs._a.array()).pow(2*_obs._p.array()-1))
 
 	_basisMatrixes[nbObj].setConstant(0.0f);
 	_basisMatrixes[nbObj].col(0) = nv;
