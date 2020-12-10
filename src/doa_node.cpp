@@ -210,7 +210,7 @@ int main(int argc, char** argv)
             Eigen::Vector3f tr_vec = _targetPosition - _eePosition;
 
             // if there are obstacles, modify the velocity according to the modulated DS
-            if (_firstObstacleReceived) {
+            if (_firstObstacleReceived && tr_vec.norm()>0.1) {
                 // add the obstacles to the DS-modulator
                 obsModulator.addObstacles(obstacles);
 
@@ -243,6 +243,8 @@ int main(int argc, char** argv)
             // publish the desired velocity
             _pubDesiredPose.publish(_msgDesiredPose);
 
+            
+
             // compute desired velocity orientation
             velUnitVector = tr_vec / tr_vec.norm();
 
@@ -250,21 +252,29 @@ int main(int argc, char** argv)
 
             // compute the velocity orientation in quaternions
             
-            vel_orient_mat = Eigen::AngleAxisf(std::atan2(velUnitVector(1), velUnitVector(0)),Eigen::Vector3f::UnitZ());
+            vel_orient_mat = Eigen::AngleAxisf(std::atan(velUnitVector(1)/ velUnitVector(0)),Eigen::Vector3f::UnitZ());
 
-            // Eigen::Matrix3f vel_rot_mat_x = Eigen::Matrix3f::Zero(3,3);
+            Eigen::Matrix3f vel_rot_mat_x = Eigen::Matrix3f::Zero(3,3);
 
             // vel_rot_mat_x = Eigen::AngleAxisf(std::atan2(velUnitVector(2), velUnitVector(0)),Eigen::Vector3f::UnitY());
 
-            // vel_orient_mat = vel_orient_mat*vel_rot_mat_x;
+            vel_rot_mat_x = Eigen::AngleAxisf(M_PI,Eigen::Vector3f::UnitY());
+
+            vel_orient_mat = vel_orient_mat*vel_rot_mat_x;
 
             vel_orient_q = Utils<float>::rotationMatrixToQuaternion(vel_orient_mat);
 
+            Eigen::Vector4f desOrient = Utils<float>::slerpQuaternion(_targetOrientation, _eeOrientation, 0.4);
+
+            // if (tr_vec.norm() < 0.05){
+            //     desOrient = Utils<float>::slerpQuaternion(_targetOrientation, _eeOrientation, 0.8);
+            // }
+
             // update the message with the desired orientation
-            _msgDesiredOrientation.w = vel_orient_q(0);
-            _msgDesiredOrientation.x = vel_orient_q(1);
-            _msgDesiredOrientation.y = vel_orient_q(2);
-            _msgDesiredOrientation.z = vel_orient_q(3);
+            _msgDesiredOrientation.w = desOrient(0);
+            _msgDesiredOrientation.x = desOrient(1);
+            _msgDesiredOrientation.y = desOrient(2);
+            _msgDesiredOrientation.z = desOrient(3);
 
             // Publish desired orientation
             _pubDesiredOrientation.publish(_msgDesiredOrientation);
