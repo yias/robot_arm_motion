@@ -10,6 +10,10 @@
 #include <string>
 #include <vector>
 
+#include <Eigen/Dense>
+#include <Eigen/Eigen>
+#include <Eigen/Geometry>
+
 #include "ros/ros.h"
 
 #include "geometry_msgs/Pose.h"
@@ -153,82 +157,102 @@ int parse_obs_params(std::string position_param,
 
 int parse_target_params(std::string position_param,
     std::string orientation_param,
-    visualization_msgs::Marker* tgt_marker,
-    geometry_msgs::Pose* tgt_msg)
+    // visualization_msgs::Marker* tgt_marker,
+    // geometry_msgs::Pose* tgt_msg,
+    std::vector<visualization_msgs::Marker>* tgt_markers,
+    std::vector<geometry_msgs::Pose>* tgt_msgs)
 {
-
-    // load ros-parameters related to the obstacles
+    // load ros-parameters related to the target
 
     // target position
     XmlRpc::XmlRpcValue target_pos_param;
     ros::param::get("/target_obstacles_sim/" + position_param, target_pos_param);
     ROS_ASSERT(target_pos_param.getType() == XmlRpc::XmlRpcValue::TypeArray);
 
-    if (target_pos_param[0].getType() == XmlRpc::XmlRpcValue::TypeArray) {
-        std::cout << "[obstacle-target simulation] Multiple targets are not supported. The target position and orientation should contain only one row." << std::endl;
-        return -1;
-    }
+    // if (target_pos_param[0].getType() == XmlRpc::XmlRpcValue::TypeArray) {
+    //     std::cout << "[obstacle-target simulation] Multiple targets are not supported. The target position and orientation should contain only one row." << std::endl;
+    //     return -1;
+    // }
 
     // target orientation
     XmlRpc::XmlRpcValue target_orient_param;
     ros::param::get("/target_obstacles_sim/" + orientation_param, target_orient_param);
     ROS_ASSERT(target_orient_param.getType() == XmlRpc::XmlRpcValue::TypeArray);
 
-    tgt_marker->header.frame_id = "/world";
-    tgt_marker->header.stamp = ros::Time();
-    tgt_marker->ns = "target_marker_";
-    tgt_marker->id = 0;
-    tgt_marker->type = visualization_msgs::Marker::CYLINDER;
-    tgt_marker->action = visualization_msgs::Marker::ADD;
-
-    // parsing the position
-    if (target_pos_param.size() != 3) {
-        std::cout << "[obstacle-target simulation] The position coordinates of the target are not equal to 3" << std::endl;
-        return -2;
+    // check that all the parameters have the same length (as the number of tergets)
+    size_t nb_targets = target_pos_param.size();
+    if (target_orient_param.size() != nb_targets) {
+        std::cout << "[obstacle-target simulation] The number of tergets in position parameter (rows) does not match the number of rows of the orientation parameters" << std::endl;
+        return -1;
     }
 
-    // to the message of the target
-    tgt_msg->position.x = static_cast<double>(target_pos_param[0]);
-    tgt_msg->position.y = static_cast<double>(target_pos_param[1]);
-    tgt_msg->position.z = static_cast<double>(target_pos_param[2]);
+    for (size_t i = 0; i < nb_targets; ++i) {
+        visualization_msgs::Marker tgt_marker;
+        geometry_msgs::Pose tgt_msg;
 
-    // to the message of the marker
-    tgt_marker->pose.position.x = tgt_msg->position.x;
-    tgt_marker->pose.position.y = tgt_msg->position.y;
-    tgt_marker->pose.position.z = tgt_msg->position.z;
+        // set the target's visualization parameters
+        tgt_marker.header.frame_id = "/world";
+        tgt_marker.header.stamp = ros::Time();
+        tgt_marker.ns = "target_marker_";
+        tgt_marker.id = i;
+        tgt_marker.type = visualization_msgs::Marker::CYLINDER;
+        tgt_marker.action = visualization_msgs::Marker::ADD;
 
-    // parsing the orientation
-    if (target_orient_param.size() != 4) {
-        std::cout << "[obstacle-target simulation] The orientation coordinates of the target are not equal to 4" << std::endl;
-        return -3;
+        // parsing the position
+        if (target_pos_param[i].size() != 3) {
+            std::cout << "[obstacle-target simulation] The position coordinates of the target " << i << "are not equal to 3" << std::endl;
+            return -1 - i * 10;
+        }
+
+        // to the message of the target
+        tgt_msg.position.x = static_cast<double>(target_pos_param[i][0]);
+        tgt_msg.position.y = static_cast<double>(target_pos_param[i][1]);
+        tgt_msg.position.z = static_cast<double>(target_pos_param[i][2]);
+
+        // to the message of the marker
+        tgt_marker.pose.position.x = tgt_msg.position.x;
+        tgt_marker.pose.position.y = tgt_msg.position.y;
+        tgt_marker.pose.position.z = tgt_msg.position.z;
+
+        // parsing the orientation
+        if (target_orient_param[i].size() != 4) {
+            std::cout << "[obstacle-target simulation] The orientation coordinates of the target " << i << " are not equal to 4" << std::endl;
+            return -2 - i * 10;
+        }
+
+        // to the message of the target
+        tgt_msg.orientation.w = static_cast<double>(target_orient_param[i][0]);
+        tgt_msg.orientation.x = static_cast<double>(target_orient_param[i][1]);
+        tgt_msg.orientation.y = static_cast<double>(target_orient_param[i][2]);
+        tgt_msg.orientation.z = static_cast<double>(target_orient_param[i][3]);
+
+        tgt_marker.pose.orientation.x = tgt_msg.orientation.x;
+        tgt_marker.pose.orientation.y = tgt_msg.orientation.y;
+        tgt_marker.pose.orientation.z = tgt_msg.orientation.z;
+        tgt_marker.pose.orientation.w = tgt_msg.orientation.w;
+
+        // setting the scale, opacity and color of the marker of the target
+        tgt_marker.scale.x = 0.07;
+        tgt_marker.scale.y = 0.07;
+        tgt_marker.scale.z = 0.01;
+        tgt_marker.color.a = 0.9;
+        tgt_marker.color.r = 0.0;
+        tgt_marker.color.g = 0.4;
+        tgt_marker.color.b = 0.9;
+        tgt_marker.lifetime = ros::Duration();
+
+        // append the new marker at the end of the vector of target markers
+        tgt_markers->push_back(tgt_marker);
+
+        // append the new target's geometry_msgs::Pose message at the end of the vector of target messages
+        tgt_msgs->push_back(tgt_msg);
     }
-
-    tgt_msg->orientation.w = static_cast<double>(target_orient_param[0]);
-    tgt_msg->orientation.x = static_cast<double>(target_orient_param[1]);
-    tgt_msg->orientation.y = static_cast<double>(target_orient_param[2]);
-    tgt_msg->orientation.z = static_cast<double>(target_orient_param[3]);
-
-    tgt_marker->pose.orientation.x = tgt_msg->orientation.x;
-    tgt_marker->pose.orientation.y = tgt_msg->orientation.y;
-    tgt_marker->pose.orientation.z = tgt_msg->orientation.z;
-    tgt_marker->pose.orientation.w = tgt_msg->orientation.w;
-
-    // setting the scale, opacity and color of the marker of the target
-    tgt_marker->scale.x = 0.07;
-    tgt_marker->scale.y = 0.07;
-    tgt_marker->scale.z = 0.01;
-    tgt_marker->color.a = 0.9;
-    tgt_marker->color.r = 0.0;
-    tgt_marker->color.g = 0.4;
-    tgt_marker->color.b = 0.9;
-    tgt_marker->lifetime = ros::Duration();
 
     return 0;
 }
 
 int main(int argc, char** argv)
 {
-
     // initialize ros node
     ros::init(argc, argv, "fake_target_publisher");
 
@@ -250,10 +274,10 @@ int main(int argc, char** argv)
     std::vector<visualization_msgs::Marker> obs_marker_msgs;
 
     // define the message for the target
-    geometry_msgs::Pose target_msg;
+    std::vector<geometry_msgs::Pose> target_msg;
 
     // define marker message for visualizing the target
-    visualization_msgs::Marker target_marker;
+    std::vector<visualization_msgs::Marker> target_marker;
 
     // fill the messeges with the parameters of the obstacles
     if (parse_obs_params("ram_obstacles_position", "ram_obstacles_orientation", "ram_obstacles_alpha", "ram_obstacles_power_params", &obs_marker_msgs, &obst_msg) < 0) {
@@ -273,7 +297,7 @@ int main(int argc, char** argv)
 
         // publish the messages
 
-        _pubTarget.publish(target_msg);
+        _pubTarget.publish(target_msg[0]);
 
         obst_msg.header.stamp = ros::Time::now();
 
@@ -284,9 +308,11 @@ int main(int argc, char** argv)
             vis_pub.publish(obs_marker_msgs[i]);
         }
 
-        target_marker.header.stamp = ros::Time::now();
+        for (size_t i = 0; i < target_marker.size(); i++) {
+            target_marker[i].header.stamp = ros::Time::now();
 
-        vis_pub.publish(target_marker);
+            vis_pub.publish(target_marker[i]);
+        }
 
         ros::spinOnce();
         loop_rate.sleep();

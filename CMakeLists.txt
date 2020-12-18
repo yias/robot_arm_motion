@@ -122,7 +122,7 @@ add_dependencies(obstacleAvoidance ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_
 # add_dependencies(fake_target_publisher ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 # script to update target position A -> B viceversa
-add_executable(fake_target_publisher src/fake_targets_node.cpp)
+add_executable(fake_target_publisher src/fake_target_node.cpp)
 target_link_libraries(fake_target_publisher PUBLIC ${catkin_LIBRARIES})
 add_dependencies(fake_target_publisher ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
