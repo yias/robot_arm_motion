@@ -4,6 +4,7 @@
     <arg name="GAZE" default="false"/>
     <arg name="GRIPPER" default="false"/>
     <arg name="GRIPPER_REAL" default="false"/>
+    <arg name="TARGET_SIM" default="false"/>
     
 
     <group ns="lwr">
@@ -44,6 +45,12 @@
         <rosparam file="$(find robot_arm_motion)/cfg/fake_target_obstacles.yaml" />
 
         <node name="target_publisher" pkg="robot_arm_motion" type="fake_target_publisher" output="screen"/>
+    </group>
+
+    <group ns="target_obstacles_sim" if="$(arg TARGET_SIM)">
+        <rosparam file="$(find robot_arm_motion)/cfg/fake_target_obstacles.yaml" />
+
+        <node name="target_sim" pkg="robot_arm_motion" type="target_selector" output="screen"/>
     </group>
 
     <group ns="target_obstacles_sim" if="$(arg GAZE)">

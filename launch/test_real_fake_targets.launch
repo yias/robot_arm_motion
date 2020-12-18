@@ -17,6 +17,12 @@
         <node name="obs_visualization" pkg="robot_arm_motion" type="obstacle_visualization" output="screen" />
     </group>
 
+    <group ns="target_obstacles_sim" if="$(arg TARGET_SIM)">
+        <rosparam file="$(find robot_arm_motion)/cfg/fake_target_obstacles.yaml" />
+
+        <node name="target_sim" pkg="robot_arm_motion" type="target_selector" output="screen"/>
+    </group>
+
     <group ns="finger_tool" unless="$(arg GRIPPER)">
         <param name="robot_description" command="$(find xacro)/xacro $(find robot_arm_motion)/models/objects/finger_tool.urdf.xacro" />
         <node pkg="tf" type="static_transform_publisher" name="kuka_tool_broadcaster" args="0 0 0 0 0 0 1 lwr_7_link tool_base 100" />

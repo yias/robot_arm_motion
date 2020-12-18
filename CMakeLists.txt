@@ -142,3 +142,7 @@ add_dependencies(visualize_gripper_orient ${${PROJECT_NAME}_EXPORTED_TARGETS} ${
 add_executable(obstacleAvoidanceClean src/doa_node_clean.cpp src/DSObstacleAvoidance.cpp)
 target_link_libraries(obstacleAvoidanceClean PUBLIC ${catkin_LIBRARIES})
 add_dependencies(obstacleAvoidanceClean ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+add_executable(target_selector src/fake_target_only.cpp)
+target_link_libraries(target_selector PUBLIC ${catkin_LIBRARIES})
+add_dependencies(target_selector ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})

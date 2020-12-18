@@ -224,7 +224,7 @@ int main(int argc, char** argv)
 
             // Bound desired velocity
             if (_vd.norm() > 0.3f) {
-                _vd = _vd * 0.1f / xD.norm();
+                _vd = _vd * 0.2f / xD.norm();
             }
 
             std::cout << "[robot_arm_motion:doa] Speed: " << _vd.norm() << "\n";

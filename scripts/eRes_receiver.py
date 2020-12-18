@@ -64,7 +64,7 @@ class gaze_oRec(object):
         self.tf_mat = self.compTF(rot_aruco_robot, tf_aruco_robot)
 
         # define the obstacles' z-coordinate (fixed for all the obstacles)
-        self.obs_z = 0.24
+        self.obs_z = 0.10
 
         # define the obstacles' orientation in quaternions - wxyz (fixed for all the obstacles)
         self.obs_orient = [0.0, 0.0, 1.0, 0.0]
