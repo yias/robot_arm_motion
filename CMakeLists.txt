@@ -117,7 +117,12 @@ add_dependencies(obstacleAvoidance ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_
 # add_dependencies(target_locator ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 # add_dependencies(target_locator ${catkin_EXPORTED_TARGETS})
 
-add_executable(fake_target_publisher src/fake_target_node.cpp)
+# add_executable(fake_target_publisher src/fake_target_node.cpp)
+# target_link_libraries(fake_target_publisher PUBLIC ${catkin_LIBRARIES})
+# add_dependencies(fake_target_publisher ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+# script to update target position A -> B viceversa
+add_executable(fake_target_publisher src/fake_targets_node.cpp)
 target_link_libraries(fake_target_publisher PUBLIC ${catkin_LIBRARIES})
 add_dependencies(fake_target_publisher ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
@@ -132,3 +137,8 @@ add_dependencies(obstacle_visualization ${${PROJECT_NAME}_EXPORTED_TARGETS} ${ca
 add_executable(visualize_gripper_orient src/visualize_gripper_orient.cpp)
 target_link_libraries(visualize_gripper_orient PUBLIC ${catkin_LIBRARIES})
 add_dependencies(visualize_gripper_orient ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+
+add_executable(obstacleAvoidanceClean src/doa_node_clean.cpp src/DSObstacleAvoidance.cpp)
+target_link_libraries(obstacleAvoidanceClean PUBLIC ${catkin_LIBRARIES})
+add_dependencies(obstacleAvoidanceClean ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})

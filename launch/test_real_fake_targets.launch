@@ -1,0 +1,47 @@
+<launch>
+
+    <!-- <arg name="OBJECT" default="sphere"/> -->
+    <arg name="GAZE" default="false"/>
+    <arg name="GRIPPER" default="false"/>
+    <arg name="GRIPPER_REAL" default="false"/>
+    
+    <!-- <node name="set_initial_pose" pkg="motion_example" type="moveToDesiredJoints" output="screen" args="30 40 0 -70 0 70 30"/> -->
+
+    <group ns="target_obstacles_sim" unless="$(arg GAZE)">
+        <rosparam file="$(find robot_arm_motion)/cfg/fake_target_obstacles.yaml" />
+
+        <node name="target_publisher" pkg="robot_arm_motion" type="fake_target_publisher" output="screen"/>
+    </group>z
+
+    <group ns="target_obstacles_sim" if="$(arg GAZE)">
+        <node name="obs_visualization" pkg="robot_arm_motion" type="obstacle_visualization" output="screen" />
+    </group>
+
+    <group ns="finger_tool" unless="$(arg GRIPPER)">
+        <param name="robot_description" command="$(find xacro)/xacro $(find robot_arm_motion)/models/objects/finger_tool.urdf.xacro" />
+        <node pkg="tf" type="static_transform_publisher" name="kuka_tool_broadcaster" args="0 0 0 0 0 0 1 lwr_7_link tool_base 100" />
+        <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+    </group>
+
+    <!-- <node name="load_dyn_params" pkg="dynamic_reconfigure" type="dynparam" args="load /lwr/joint_controllers/ds_param $(find robot_arm_motion)/cfg/ds_params/sim_ds_params.yaml"/> -->
+
+    <group ns="gripper" if="$(arg GRIPPER)">
+        <arg name="gripper_gui" default="Fasle" />
+        <param name="robot_description" command="$(find xacro)/xacro $(find robot_arm_motion)/models/robots/robotiq_arg2f_85_model.xacro" />
+        <param name="use_gui" value="$(arg gripper_gui)"/>
+        <node name="gripper_sim" pkg="robot_arm_motion" type="gripper_sim.py" unless="$(arg GRIPPER_REAL)"/>
+        <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+        <node pkg="tf" type="static_transform_publisher" name="kuka_tool_broadcaster" args="0 0 0 0 0 0 1 lwr_7_link robotiq_arg2f_base_link 100" />
+        <node name="gripper_interface" pkg="robotiq_2f_gripper_control" type="Robotiq2FGripperTcpNode.py" args="192.168.1.11" respawn="true" output="screen" if="$(arg GRIPPER_REAL)"/>
+        <node name="gripper_controller" pkg="robot_arm_motion" type="gripper_controller.py" output="screen"/>
+    </group>
+
+
+    <!-- <group>
+        <node name="rviz_kuka" pkg="rviz" type="rviz" args="-d '$(find robot_arm_motion)/cfg/rviz/kuka_objects.rviz'" unless="$(arg GRIPPER)"/>
+
+        <node name="rviz_kuka" pkg="rviz" type="rviz" args="-d '$(find robot_arm_motion)/cfg/rviz/kuka_gripper_objects.rviz'" if="$(arg GRIPPER)"/>
+    </group> -->
+
+
+</launch>

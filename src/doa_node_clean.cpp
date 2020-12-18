@@ -7,8 +7,6 @@
 */
 
 #include "ros/ros.h"
-#include "std_msgs/Int32.h"
-#include "std_msgs/Int8.h"
 #include "std_msgs/String.h"
 
 #include "sensor_msgs/JointState.h"
@@ -34,11 +32,6 @@
 #include <Eigen/Eigen>
 #include <Eigen/Geometry>
 
-#include <robotiq_2f_gripper_control/Robotiq2FGripper_robot_input.h>
-
-#include <algorithm>
-#include <numeric>
-
 bool _firstRealPoseReceived = false;
 bool _firstObstacleReceived = false;
 bool _firstTargetPoseReceived = false;
@@ -56,17 +49,6 @@ std::vector<Obstacle> obstacles;
 
 Eigen::Vector3f tool_translation;
 Eigen::Matrix4f tool_transformation_mat;
-
-std_msgs::Int32 predicted_label;
-bool _startRobotMotion = true;
-bool _pauseRobotMotion = false;
-bool _activateGripper = false;
-int GripperState = 0; // 0 is opened, 1 is closed. starts open
-
-// bool isGripperOpen = false;
-// bool isGripperClosed = false;
-// bool gripperStoppedClosing = false;
-// bool gripperStoppedOpening = false;
 
 void robotListener(const geometry_msgs::Pose::ConstPtr& msg)
 {
@@ -128,50 +110,6 @@ void obstacleListener(const robot_arm_motion::obstacle_msg& msg)
     }
 }
 
-void emgLabelListener(const std_msgs::Int32::ConstPtr& msg)
-{
-    predicted_label.data = msg->data;
-
-    if (predicted_label.data == 1) {
-        _startRobotMotion = true;
-        _pauseRobotMotion = false;
-    }
-
-    if (predicted_label.data == 2) {
-        _startRobotMotion = false;
-        _pauseRobotMotion = true;
-    }
-
-    // if (predicted_label.data == 5) {
-    //     _activateGripper = true;
-    // }
-
-    ROS_INFO("Classification output received: [%i]", msg->data);
-}
-
-void gripperListener(const robotiq_2f_gripper_control::Robotiq2FGripper_robot_input& msg)
-{
-    int gripper_position = msg.gPO;
-    int gripper_status = msg.gOBJ;
-
-    if (gripper_position <= 20) {
-        GripperState = 0; // open
-    }
-
-    if (gripper_position >= 200) {
-        GripperState = 1; // closed
-    }
-
-    // if (gripper_status == 2) {
-    //     gripperStoppedClosing = true; //due to contact with object
-    // }
-
-    // if (gripper_status == 1) {
-    //     gripperStoppedOpening = true; //due to contact with object
-    // }
-    ROS_INFO("Gripper_position received: [%i] \n", gripper_position);
-}
-
 int main(int argc, char** argv)
 {
 
@@ -194,15 +132,11 @@ int main(int argc, char** argv)
     // subscriber for receiving the obstacles
     ros::Subscriber _obstaclesSub = n.subscribe("/obstacles", 1, obstacleListener);
 
-    ros::Subscriber _emgclassifSub = n.subscribe("/predictedLabel", 1, emgLabelListener);
-    ros::Subscriber _gripperSub = n.subscribe("/gripper/Robotiq2FGripperRobotInput", 1, gripperListener);
-
     // define a publisher for visualizing the trajectory of the robot ee
     ros::Publisher marker_pub = n.advertise<visualization_msgs::Marker>("ee_trajectory", 10);
 
     ros::Publisher _pubDesiredPose = n.advertise<geometry_msgs::Twist>("/lwr/joint_controllers/passive_ds_command_vel", 10);
     ros::Publisher _pubDesiredOrientation = n.advertise<geometry_msgs::Quaternion>("/lwr/joint_controllers/passive_ds_command_orient", 1);
-    ros::Publisher _pubGripperCommand = n.advertise<std_msgs::Int8>("/gripper/command", 10);
 
     // define a message for the desired velocity
     geometry_msgs::Twist _msgDesiredPose;
@@ -212,8 +146,6 @@ int main(int argc, char** argv)
 
     // define a marker for visualizing the trajectory of the robot ee
     visualization_msgs::Marker traj_line;
-
-    std_msgs::Int8 _desGripperCommand;
 
     traj_line.header.frame_id = "/world";
     traj_line.pose.orientation.w = 1.0;
@@ -264,9 +196,6 @@ int main(int argc, char** argv)
     ros::Rate loop_rate(100);
 
     int count = 0;
-    int vec_size = 0;
-    int nb_pred = 5;
-    int last_label = 7;
 
     while (ros::ok()) {
 
@@ -295,58 +224,22 @@ int main(int argc, char** argv)
 
             // Bound desired velocity
             if (_vd.norm() > 0.3f) {
-                _vd = _vd * 0.2f / xD.norm();
+                _vd = _vd * 0.1f / xD.norm();
             }
 
-            // std::cout << "[robot_arm_motion:doa] Speed: " << _vd.norm() << "\n";
+            std::cout << "[robot_arm_motion:doa] Speed: " << _vd.norm() << "\n";
             std::cout << "[robot_arm_motion:doa] Distance from target: " << (_eePosition - _targetPosition).norm() << "\n";
 
-            // Start motion if label = 1, pause if label = 2
-            if (_startRobotMotion) {
-                // std::cout << "Starting robot motion "
-                //           << "\n";
+            // update the message with the desired velocity
+            _msgDesiredPose.linear.x = _vd[0];
+            _msgDesiredPose.linear.y = _vd[1];
+            _msgDesiredPose.linear.z = _vd[2];
+            _msgDesiredPose.angular.x = 0.0;
+            _msgDesiredPose.angular.y = 0.0;
+            _msgDesiredPose.angular.z = 0.0;
 
-                // define desired vel
-                _msgDesiredPose.linear.x = _vd[0];
-                _msgDesiredPose.linear.y = _vd[1];
-                _msgDesiredPose.linear.z = _vd[2];
-                _msgDesiredPose.angular.x = 0.0;
-                _msgDesiredPose.angular.y = 0.0;
-                _msgDesiredPose.angular.z = 0.0;
-
-                // Define desired orientation
-                _msgDesiredOrientation.w = _targetOrientation(0);
-                _msgDesiredOrientation.x = _targetOrientation(1);
-                _msgDesiredOrientation.y = _targetOrientation(2);
-                _msgDesiredOrientation.z = _targetOrientation(3);
-
-                _pubDesiredPose.publish(_msgDesiredPose);
-                _pubDesiredOrientation.publish(_msgDesiredOrientation);
-            }
-
-            if (_pauseRobotMotion) {
-                // std::cout << "Orientation of ee [0]: " << _eeOrientation[0] << "\n";
-                // std::cout << "Orientation of ee [1]: " << _eeOrientation[1] << "\n";
-                // std::cout << "Pausing robot motion "
-                //           << "\n";
-
-                // define desired position
-                _msgDesiredPose.linear.x = 0.0;
-                _msgDesiredPose.linear.y = 0.0;
-                _msgDesiredPose.linear.z = 0.0;
-                _msgDesiredPose.angular.x = 0.0;
-                _msgDesiredPose.angular.y = 0.0;
-                _msgDesiredPose.angular.z = 0.0;
-
-                // Define desired orientation
-                _msgDesiredOrientation.w = _targetOrientation(0);
-                _msgDesiredOrientation.x = _targetOrientation(1);
-                _msgDesiredOrientation.y = _targetOrientation(2);
-                _msgDesiredOrientation.z = _targetOrientation(3);
-
-                _pubDesiredPose.publish(_msgDesiredPose);
-                _pubDesiredOrientation.publish(_msgDesiredOrientation);
-            }
+            // publish the desired velocity
+            _pubDesiredPose.publish(_msgDesiredPose);
 
             // compute desired velocity orientation
             velUnitVector = tr_vec / tr_vec.norm();
@@ -365,7 +258,7 @@ int main(int argc, char** argv)
 
             vel_orient_q = Utils<float>::rotationMatrixToQuaternion(vel_orient_mat);
 
-            Eigen::Vector4f desOrient = Utils<float>::slerpQuaternion(vel_orient_q, _eeOrientation, 0.8);
+            Eigen::Vector4f desOrient = Utils<float>::slerpQuaternion(_targetOrientation, _eeOrientation, 0.4);
 
             // if (tr_vec.norm() < 0.05){
             //     desOrient = Utils<float>::slerpQuaternion(_targetOrientation, _eeOrientation, 0.8);
@@ -389,32 +282,6 @@ int main(int argc, char** argv)
             traj_line.header.stamp = ros::Time::now();
             traj_line.points.push_back(p);
             marker_pub.publish(traj_line);
-
-            // Gripper control:
-            // take last 5 predicted labels and check if muscle was activated
-            if (last_label == 7 && predicted_label.data == 5) {
-                _activateGripper = true;
-                std::cout << "Gripper activated"
-                          << "\n";
-            }
-            else {
-                _activateGripper = false;
-            }
-
-            last_label = predicted_label.data;
-
-            if (_activateGripper && GripperState == 0) {
-                _desGripperCommand.data = 1;
-                _pubGripperCommand.publish(_desGripperCommand);
-                std::cout << "Closing gripper"
-                          << "\n";
-            }
-            if (_activateGripper && GripperState == 1) {
-                _desGripperCommand.data = 2;
-                _pubGripperCommand.publish(_desGripperCommand);
-                std::cout << "Opening gripper"
-                          << "\n";
-            }
         }
 
         ros::spinOnce();

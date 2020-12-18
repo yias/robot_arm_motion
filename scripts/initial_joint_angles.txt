@@ -1,1 +1,4 @@
 rosrun motion_example moveToDesiredJoints 41 91 8 -41 -12 45 49
+
+
+rosrun motion_example moveToDesiredJoints 41 63 8 -52 -20 45 49

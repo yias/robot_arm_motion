@@ -1,17 +1,17 @@
 # parameters of obstacles and the target
 ram_obstacles_position: # position of the obstacles in meters (xyz)
-  - [-0.2, -0.4, 0.2]
-  - [0.2, -0.4, 0.2]
+  - [-0.5, -0.1, 0.2]
+  - [-0.5, 0.25, 0.2]
 ram_obstacles_orientation:  # orientation of the obstacles in quaternions (wxyz)
   - [0.0, 0.0, 1.0, 0.0]
   - [0.0, 0.0, 1.0, 0.0]
 ram_obstacles_alpha:  # alpha parameters of the obstacles
-  - [0.1, 0.2, 0.1]
+  - [0.2, 0.1, 0.1]
   - [0.1, 0.1, 0.3]
 ram_obstacles_power_params: # power parameters of the obstacles
   - [1.0, 1.0, 1.0]
   - [1.0, 1.0, 1.0]
 ram_target_position: # target's position in meters (xyz) #0.5, -0.4, 0.22
-  [0.5, -0.6, 0.22]
+  [-0.5, 0.50, 0.12]
 ram_target_orientation: # target's orientation in quaternions (wxyz)
   [0.0, 0.0, 1.0, 0.0]
