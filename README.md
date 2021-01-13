@@ -4,7 +4,7 @@ Robot-Arm motion is a package for controlling the rnd effector of a robot arm. U
 
 1) trajectory generation for obstacle avoidance through a dynamical system
 
-![](docs/pics/obstacle_avoidance_real_rviz.gif)
+![](docs/pics/obstacle_avoidance_real_rviz2.gif)
 
 2) trajectory generation through a linear DS, accepting a mocap marker as a target
 
