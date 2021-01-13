@@ -2,8 +2,14 @@
 
 Robot-Arm motion is a package for controlling the rnd effector of a robot arm. Up to this point, it contains 
 
-1) trajectory generation through a dynamical system with objstacle avoidance and
+1) trajectory generation for obstacle avoidance through a dynamical system
+
+![](docs/pics/obstacle_avoidance_real_rviz.gif)
+
 2) trajectory generation through a linear DS, accepting a mocap marker as a target
+
+![](docs/pics/marker_robot.gif)
+
 
 Lisence: GNU GPL v3
 
@@ -33,7 +39,7 @@ $catkin_make
 
 ## Running the controllers
 
-- For the robot to follow a mocap marker, type:
+- For the robot to follow a mocap marker:
 
 First, launch the mocap node:
 
